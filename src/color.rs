@@ -1,8 +1,6 @@
-mod vec3;
+use crate::vec3::Vec3 as Vec3;
 
-use crate vec3::Vec3;
-
-pub fn write_color(const &Vec3 pixel_color){
+pub fn write_color(pixel_color: Vec3){
     let r: f64 = pixel_color.x();
     let g: f64 = pixel_color.y();
     let b: f64 = pixel_color.z();
