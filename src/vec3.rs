@@ -147,3 +147,11 @@ impl DivAssign<f64> for Vec3{
         self.e[2]/=scalar;
     }
 }
+
+impl MulAssign<f64> for Vec3{
+    fn mul_assign(&mut self, scalar: f64){
+        self.e[0] *= scalar;
+        self.e[1] *= scalar;
+        self.e[2] *= scalar;
+    }
+}
