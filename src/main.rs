@@ -6,7 +6,24 @@ use vec3::Vec3 as Vec3;
 use color::write_color as write_color;
 use ray::Ray as Ray;
 
+fn hit_sphere(center: &Vec3, radius: f64, r: &Ray)->f64{
+    let oc: Vec3 = *center-r.origin();
+    let a: f64 = Vec3::dot(&r.direction(), r.direction());
+    let b: f64 = -2.0*Vec3::dot(&r.direction(),oc);
+    let c: f64 = Vec3::dot(&oc,oc)-radius*radius;
+    let discriminant: f64 = b*b-4.0*a*c;
+    if discriminant>=0.0{
+        return -1.0
+    }
+    (-b-discriminant.sqrt())/(2.0*a)
+}
+
 fn ray_color(r: &Ray)->Vec3{
+    let t: f64 = hit_sphere(&Vec3::new(0.0,0.0,-1.0),0.5,r);
+    if t>0.0{
+        let N: Vec3 = Vec3::unit_vector(&(r.at(t)-Vec3::new(0.0,0.0,-1.0)));
+        return 0.5*Vec3::new(N.x()+1.0,N.y()+1.0,N.z()+1.0)
+    }
     let unit_direction: Vec3 = Vec3::unit_vector(&r.direction());
     let a: f64 = 0.5*(unit_direction.y()+1.0);
     (1.0-a)*Vec3::new(1.0,1.0,1.0)+a*Vec3::new(0.5,0.7,1.0)
