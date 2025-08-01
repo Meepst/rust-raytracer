@@ -6,20 +6,20 @@ use vec3::Vec3 as Vec3;
 use color::write_color as write_color;
 use ray::Ray as Ray;
 
-fn hit_sphere(center: &Vec3, radius: f64, r: &Ray)->f64{
-    let oc: Vec3 = *center-r.origin();
+fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
+    let oc: Vec3 = center-r.origin();
     let a: f64 = Vec3::dot(&r.direction(), r.direction());
     let b: f64 = -2.0*Vec3::dot(&r.direction(),oc);
     let c: f64 = Vec3::dot(&oc,oc)-radius*radius;
     let discriminant: f64 = b*b-4.0*a*c;
-    if discriminant>=0.0{
+    if discriminant < 0.0{
         return -1.0
     }
     (-b-discriminant.sqrt())/(2.0*a)
 }
 
 fn ray_color(r: &Ray)->Vec3{
-    let t: f64 = hit_sphere(&Vec3::new(0.0,0.0,-1.0),0.5,r);
+    let t: f64 = hit_sphere(Vec3::new(0.0,0.0,-1.0),0.5,r);
     if t>0.0{
         let N: Vec3 = Vec3::unit_vector(&(r.at(t)-Vec3::new(0.0,0.0,-1.0)));
         return 0.5*Vec3::new(N.x()+1.0,N.y()+1.0,N.z()+1.0)
@@ -54,7 +54,7 @@ fn main() {
     for i in 0..image_height{
         eprint!("\rScanlines remaining: {} ", image_height - i);
         for j in 0..image_width{
-            let pixel_center: Vec3 = pixel00_loc+(i as f64*pixel_delta_u)+(j as f64*pixel_delta_v);
+            let pixel_center: Vec3 = pixel00_loc+(j as f64*pixel_delta_u)+(i as f64*pixel_delta_v);
             let ray_direction: Vec3 = pixel_center - camera_center;
 
             let r: Ray = Ray::new(camera_center, ray_direction);
