@@ -1,29 +1,38 @@
 mod vec3;
 mod color;
 mod ray;
+mod hittable;
+mod hittable_list;
+mod sphere;
 
+use std::sync::Arc;
 use vec3::Vec3 as Vec3;
 use color::write_color as write_color;
 use ray::Ray as Ray;
+use sphere::Sphere as Sphere;
+use hittable::Hittable as Hittable;
+use hittable::Hit_record as Hit_record;
+use hittable_list::Hittable_List as Hittable_List;
 
-fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
-    let oc: Vec3 = center-r.origin();
-    let a: f64 = Vec3::dot(&r.direction(), r.direction());
-    let b: f64 = -2.0*Vec3::dot(&r.direction(),oc);
-    let c: f64 = Vec3::dot(&oc,oc)-radius*radius;
-    let discriminant: f64 = b*b-4.0*a*c;
-    if discriminant < 0.0{
-        return -1.0
-    }
-    (-b-discriminant.sqrt())/(2.0*a)
-}
+// fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
+//     let oc: Vec3 = center-r.origin();
+//     let a: f64 = r.direction().length_squared();
+//     let h: f64 = Vec3::dot(&r.direction(), oc);
+//     let c: f64 = oc.length_squared()-radius*radius;
+//     let discriminant: f64 = h*h-a*c;
+//     if discriminant < 0.0{
+//         return -1.0
+//     }
+//     (h-discriminant.sqrt())/(a)
+// }
 
-fn ray_color(r: &Ray)->Vec3{
-    let t: f64 = hit_sphere(Vec3::new(0.0,0.0,-1.0),0.5,r);
-    if t>0.0{
-        let N: Vec3 = Vec3::unit_vector(&(r.at(t)-Vec3::new(0.0,0.0,-1.0)));
-        return 0.5*Vec3::new(N.x()+1.0,N.y()+1.0,N.z()+1.0)
+
+fn ray_color(r: &Ray, world: &dyn Hittable)->Vec3{
+    let mut rec: Hit_record = Hit_record::new();
+    if world.hit(r, 0.0, f64::INFINITY, &mut rec){
+        return 0.5*(rec.normal()+Vec3::new(1.0,1.0,1.0))
     }
+    
     let unit_direction: Vec3 = Vec3::unit_vector(&r.direction());
     let a: f64 = 0.5*(unit_direction.y()+1.0);
     (1.0-a)*Vec3::new(1.0,1.0,1.0)+a*Vec3::new(0.5,0.7,1.0)
@@ -34,6 +43,10 @@ fn main() {
     let aspect_ratio: f64 = 16.0/9.0;
 
     let image_height: u32 = image_width / aspect_ratio as u32;
+
+    let mut world: Hittable_List = Hittable_List::new();
+    world.push(Arc::new(Sphere::new(&Vec3::new(0.0,0.0,-1.0),0.5)));
+    world.push(Arc::new(Sphere::new(&Vec3::new(0.0,-100.5,-1.0),100.0)));
 
     let focal_length: f64 = 1.0;
     let viewport_height: f64 = 2.0;
@@ -59,7 +72,7 @@ fn main() {
 
             let r: Ray = Ray::new(camera_center, ray_direction);
 
-            let pixel_color: Vec3 = ray_color(&r);
+            let pixel_color: Vec3 = ray_color(&r, &world);
             write_color(pixel_color);
         }
     }
