@@ -44,7 +44,7 @@ impl Vec3 {
     pub fn dot(&self, other: Vec3)->f64{
         self.e[0]*other.e[0]+self.e[1]*other.e[1]+self.e[2]*other.e[2]
     }
-    fn random_double()->f64{
+    pub fn random_double()->f64{
         rand::thread_rng().gen_range(0.0..1.0)
     }
     fn random_between(min: f64, max: f64)->f64{
@@ -83,10 +83,11 @@ impl Vec3 {
     pub fn reflect(&self, n: &Vec3)->Vec3{
         *self - 2.0*self.dot(*n)**n
     }
-    pub fn refract(&self, n: Vec3, etai_over_etat)->Vec3{
-        let cos_theta: f64 = f64::min(self.dot(n),1.0);
-        let r_out_perp: Vec3 = etai_over_etat * (self + cos_theta*n);
-        
+    pub fn refract(&self, n: Vec3, etai_over_etat: f64)->Vec3{
+        let cos_theta: f64 = f64::min(-self.dot(n),1.0);
+        let r_out_perp: Vec3 = etai_over_etat * (*self + cos_theta*n);
+        let r_out_parallel: Vec3 = -((1.0-r_out_perp.length_squared()).abs().sqrt() * n);
+        r_out_perp+r_out_parallel
     }
 }
 

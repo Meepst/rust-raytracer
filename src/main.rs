@@ -21,6 +21,7 @@ use camera::Camera as Camera;
 use material::Lambertian as Lambertian;
 use material::Material as Material;
 use material::Metal as Metal;
+use material::Dielectric as Dielectric;
 
 // fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
 //     let oc: Vec3 = center-r.origin();
@@ -51,14 +52,17 @@ fn main() {
 
     let material_ground: Lambertian = Lambertian::new(Vec3::new(0.8,0.8,0.0));
     let material_center: Lambertian = Lambertian::new(Vec3::new(0.1,0.2,0.5));
-    let material_left: Metal = Metal::new(Vec3::new(0.8,0.8,0.8), 0.3);
+    let material_left: Dielectric = Dielectric::new(1.50);
+    let material_bubble: Dielectric = Dielectric::new(1.00/1.50);
     let material_right: Metal = Metal::new(Vec3::new(0.8,0.6,0.2), 1.0);
 
-
+    // let material_test: Dielectric = Dielectric::new(1.50);
+    // world.push(Arc::new(Sphere::new(Vec3::new(0.0,0.0,-1.0),0.5,Arc::new(material_test))));
 
     world.push(Arc::new(Sphere::new(Vec3::new(0.0,0.0,-1.0),0.5, Arc::new(material_center))));
     world.push(Arc::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0),100.0, Arc::new(material_ground))));
     world.push(Arc::new(Sphere::new(Vec3::new(-1.0,0.0,-1.0),0.5,Arc::new(material_left))));
+    world.push(Arc::new(Sphere::new(Vec3::new(-1.0,0.0,-1.0),0.4, Arc::new(material_bubble))));
     world.push(Arc::new(Sphere::new(Vec3::new(1.0,0.0,-1.0),0.5,Arc::new(material_right))));
 
     let mut cam: Camera = Camera::new(16.0/9.0, 400, 100, 50);

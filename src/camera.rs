@@ -14,6 +14,7 @@ use std::sync::Arc;
 pub struct Camera{
     aspect_ratio: f64,
     pixel_samples_scale: f64,
+    vfov: f64,
     image_width: u32,
     image_height: u32,
     samples_per_pixel: u32,
@@ -25,10 +26,11 @@ pub struct Camera{
 }
 
 impl Camera{
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, max_depth: u32)->Camera{
+    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, max_depth: u32, vfov: f64)->Camera{
         Camera{
             aspect_ratio: aspect_ratio,
             pixel_samples_scale: 0.0,
+            vfov: vfov,
             image_width: image_width,
             image_height: 1,
             samples_per_pixel: samples_per_pixel,
@@ -41,7 +43,6 @@ impl Camera{
     }
     fn initialize(&mut self){
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
-        eprintln!("{0} {1}", self.image_height, self.aspect_ratio);
         self.center = Vec3::enew();
 
         self.pixel_samples_scale = 1.0/self.samples_per_pixel as f64;
@@ -77,6 +78,16 @@ impl Camera{
         let unit_direction: Vec3 = Vec3::unit_vector(&r.direction());
         let a: f64 = 0.5*(unit_direction.y()+1.0);
         (1.0-a)*Vec3::new(1.0,1.0,1.0)+a*Vec3::new(0.5,0.7,1.0)
+        // let dir: Vec3 = Vec3::unit_vector(&r.direction());
+        // if dir.x()>=0.0 && dir.y()>=0.0{
+        //     return Vec3::new(1.0,0.0,0.0)
+        // }else if dir.x()>=0.0 && dir.y() < 0.0{
+        //     return Vec3::new(0.0,1.0,0.0)
+        // }else if dir.x() < 0.0 && dir.y() >= 0.0{
+        //     return Vec3::new(0.0,0.0,1.0)
+        // }else{
+        //     return Vec3::new(1.0,1.0,0.0)
+        // }
     }
     pub fn render(&mut self, world: &dyn Hittable){
         self.initialize();
