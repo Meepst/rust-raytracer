@@ -1,4 +1,5 @@
 use std::ops::{Add, Sub, Neg, Mul, Div, AddAssign, DivAssign, MulAssign, Index};
+use rand::Rng; 
 
 #[derive(Debug,Clone,Copy)]
 pub struct Vec3 {
@@ -43,8 +44,49 @@ impl Vec3 {
     pub fn dot(&self, other: Vec3)->f64{
         self.e[0]*other.e[0]+self.e[1]*other.e[1]+self.e[2]*other.e[2]
     }
+    fn random_double()->f64{
+        rand::thread_rng().gen_range(0.0..1.0)
+    }
+    fn random_between(min: f64, max: f64)->f64{
+        rand::thread_rng().gen_range(min..max)
+    }
+    pub fn random()->Vec3{
+        Vec3::new(Self::random_double(),Self::random_double(),Self::random_double())
+    }
+    pub fn random_vars(min: f64, max: f64)->Vec3{
+        Vec3::new(Self::random_between(min,max),Self::random_between(min,max),Self::random_between(min,max))
+    }
     pub fn unit_vector(&self)->Vec3{
         *self / self.length()
+    }
+    pub fn random_unit_vector()->Vec3{
+        loop {
+            let p: Vec3 = Self::random_vars(-1.0,1.0);
+            let lensq: f64 = p.length_squared();
+            if 1e-160 < lensq && lensq <= 1.0{
+                return p / lensq.sqrt()
+            }
+        }
+    }
+    pub fn random_on_hemisphere(normal: &Vec3)->Vec3{
+        let on_unit_sphere: Vec3 = Self::random_unit_vector();
+        if on_unit_sphere.dot(*normal) > 0.0 {
+            return on_unit_sphere
+        }else{
+            -on_unit_sphere
+        }
+    }
+    pub fn near_zero(&self)->bool{
+        let s: f64 = 1e-8;
+        f64::abs(self.x())<s && f64::abs(self.y())<s&& f64::abs(self.z())< s
+    }
+    pub fn reflect(&self, n: &Vec3)->Vec3{
+        *self - 2.0*self.dot(*n)**n
+    }
+    pub fn refract(&self, n: Vec3, etai_over_etat)->Vec3{
+        let cos_theta: f64 = f64::min(self.dot(n),1.0);
+        let r_out_perp: Vec3 = etai_over_etat * (self + cos_theta*n);
+        
     }
 }
 

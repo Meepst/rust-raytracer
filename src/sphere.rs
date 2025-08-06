@@ -2,23 +2,28 @@ use crate::vec3::Vec3 as Vec3;
 use crate::hittable::Hit_record as Hit_record;
 use crate::hittable::Hittable as Hittable;
 use crate::ray::Ray as Ray;
+use crate::interval::Interval as Interval;
+use crate::material::Material as Material;
+use std::sync::Arc;
 
 pub struct Sphere{
     center: Vec3,
     radius: f64,
+    pub mat: Arc<dyn Material>,
 }
 
 impl Sphere{
-    pub fn new(center: &Vec3, radius: f64)->Sphere{
+    pub fn new(center: Vec3, radius: f64, mat: Arc<dyn Material>)->Sphere{
         Sphere{
-            center: *center,
+            center: center,
             radius: f64::max(0.0,radius),
+            mat: mat,
         }
     }
 }
 
 impl Hittable for Sphere{
-    fn hit(&self, r: &Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut Hit_record)->bool{
+    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut Hit_record)->bool{
         let oc: Vec3 = self.center-r.origin();
         let a: f64 = r.direction().length_squared();
         let h: f64 = Vec3::dot(&r.direction(), oc);
@@ -31,9 +36,9 @@ impl Hittable for Sphere{
 
         let sqrtd: f64 = discriminant.sqrt();
         let mut root: f64 = (h-sqrtd)/a;
-        if root <= ray_tmin || ray_tmax <= root{
+        if !ray_t.surrounds(root){
             root = (h+sqrtd) / a;
-            if root <= ray_tmin || ray_tmax <= root{
+            if !ray_t.surrounds(root){
                 return false
             }
         }
@@ -43,8 +48,8 @@ impl Hittable for Sphere{
         rec.setP(r.at(rec.t()));
         let outward_normal: Vec3 = (rec.p() - self.center) / self.radius;
         rec.set_face_normal(r, &outward_normal);
-
-
+        rec.mat = self.mat.clone();
+        
         return true
     }
 }
