@@ -50,21 +50,40 @@ use material::Dielectric as Dielectric;
 fn main() {
     let mut world: Hittable_List = Hittable_List::new();
 
-    let material_ground: Lambertian = Lambertian::new(Vec3::new(0.8,0.8,0.0));
-    let material_center: Lambertian = Lambertian::new(Vec3::new(0.1,0.2,0.5));
-    let material_left: Dielectric = Dielectric::new(1.50);
-    let material_bubble: Dielectric = Dielectric::new(1.00/1.50);
-    let material_right: Metal = Metal::new(Vec3::new(0.8,0.6,0.2), 1.0);
+    let ground_material: Lambertian = Lambertian::new(Vec3::new(0.5,0.5,0.5));
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,-1000.0,0.0),1000.0,Arc::new(ground_material))));
 
-    // let material_test: Dielectric = Dielectric::new(1.50);
-    // world.push(Arc::new(Sphere::new(Vec3::new(0.0,0.0,-1.0),0.5,Arc::new(material_test))));
+    for a in -11..11{
+        for b in -11..11{
+            let choose_mat: f64 = Vec3::random_double();
+            let center: Vec3 = Vec3::new(a as f64+0.9*Vec3::random_double(),0.2,b as f64+0.9*Vec3::random_double());
+            if (center-Vec3::new(4.0,0.2,0.0)).length() > 0.9{
+                if choose_mat < 0.8{
+                    let albedo: Vec3 = Vec3::random()*Vec3::random();
+                    let object_material: Lambertian = Lambertian::new(albedo);
+                    world.push(Arc::new(Sphere::new(center, 0.2, Arc::new(object_material))));
+                }else if choose_mat < 0.95{
+                    let albedo: Vec3 = Vec3::random()*Vec3::random();
+                    let fuzz: f64 = Vec3::random_between(0.0,0.5);
+                    let object_material: Metal = Metal::new(albedo, fuzz);
+                    world.push(Arc::new(Sphere::new(center, 0.2, Arc::new(object_material))));
+                }else{
+                    let object_material: Dielectric = Dielectric::new(1.5);
+                    world.push(Arc::new(Sphere::new(center, 0.2, Arc::new(object_material))));
+                }
+            }
+        }
+    }
 
-    world.push(Arc::new(Sphere::new(Vec3::new(0.0,0.0,-1.0),0.5, Arc::new(material_center))));
-    world.push(Arc::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0),100.0, Arc::new(material_ground))));
-    world.push(Arc::new(Sphere::new(Vec3::new(-1.0,0.0,-1.0),0.5,Arc::new(material_left))));
-    world.push(Arc::new(Sphere::new(Vec3::new(-1.0,0.0,-1.0),0.4, Arc::new(material_bubble))));
-    world.push(Arc::new(Sphere::new(Vec3::new(1.0,0.0,-1.0),0.5,Arc::new(material_right))));
+    let material_1: Dielectric = Dielectric::new(1.5);
+    let material_2: Lambertian = Lambertian::new(Vec3::new(0.4,0.2,0.1));
+    let material_3: Metal = Metal::new(Vec3::new(0.7,0.6,0.5),0.0);
 
-    let mut cam: Camera = Camera::new(16.0/9.0, 400, 100, 50);
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,1.0,0.0),1.0,Arc::new(material_1))));
+    world.push(Arc::new(Sphere::new(Vec3::new(-4.0,1.0,0.0),1.0,Arc::new(material_2))));
+    world.push(Arc::new(Sphere::new(Vec3::new(4.0,1.0,0.0),1.0,Arc::new(material_3))));
+
+    let mut cam: Camera = Camera::new(16.0/9.0, 1200, 500, 50, 20.0, Vec3::new(13.0,2.0,3.0),
+    Vec3::new(0.0,0.0,0.0),Vec3::new(0.0,1.0,0.0),0.6,10.0);
     cam.render(&world);
 }

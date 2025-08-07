@@ -8,7 +8,7 @@ fn linear_to_gamma(linear_component: f64)->f64{
     0.0
 }
 
-pub fn write_color(pixel_color: Vec3){
+pub fn write_color(pixel_color: Vec3)->String{
     let mut r: f64 = pixel_color.x();
     let mut g: f64 = pixel_color.y();
     let mut b: f64 = pixel_color.z();
@@ -22,5 +22,5 @@ pub fn write_color(pixel_color: Vec3){
     let gbyte: i32 = (256.0 * intensity.clamp(g)) as i32;
     let bbyte: i32 = (256.0 * intensity.clamp(b)) as i32;
     
-    println!("{rbyte} {gbyte} {bbyte}")
+    format!("{rbyte} {gbyte} {bbyte}\n")
 }

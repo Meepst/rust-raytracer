@@ -8,7 +8,7 @@ use crate::material::Lambertian as Lambertian;
 use crate::vec3::Vec3 as Vec3;
 
 pub struct Hittable_List{
-    objects: Vec<Arc<dyn Hittable>>,
+    objects: Vec<Arc<dyn Hittable + Sync + Send>>,
 }
 
 impl Hittable_List{

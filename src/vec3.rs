@@ -47,7 +47,7 @@ impl Vec3 {
     pub fn random_double()->f64{
         rand::thread_rng().gen_range(0.0..1.0)
     }
-    fn random_between(min: f64, max: f64)->f64{
+    pub fn random_between(min: f64, max: f64)->f64{
         rand::thread_rng().gen_range(min..max)
     }
     pub fn random()->Vec3{
@@ -88,6 +88,14 @@ impl Vec3 {
         let r_out_perp: Vec3 = etai_over_etat * (*self + cos_theta*n);
         let r_out_parallel: Vec3 = -((1.0-r_out_perp.length_squared()).abs().sqrt() * n);
         r_out_perp+r_out_parallel
+    }
+    pub fn random_in_unit_disk()->Vec3{
+        loop{
+            let p: Vec3 = Vec3::new(Self::random_between(-1.0,1.0), Self::random_between(-1.0,1.0),0.0);
+            if p.length_squared() < 1.0{
+                return p
+            }
+        }
     }
 }
 
