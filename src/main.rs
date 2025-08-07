@@ -61,7 +61,8 @@ fn main() {
                 if choose_mat < 0.8{
                     let albedo: Vec3 = Vec3::random()*Vec3::random();
                     let object_material: Lambertian = Lambertian::new(albedo);
-                    world.push(Arc::new(Sphere::new(center, 0.2, Arc::new(object_material))));
+                    let center2: Vec3 = center+Vec3::new(0.0,Vec3::random_between(0.0,0.5),0.0);
+                    world.push(Arc::new(Sphere::newt(center,center2, 0.2, Arc::new(object_material))));
                 }else if choose_mat < 0.95{
                     let albedo: Vec3 = Vec3::random()*Vec3::random();
                     let fuzz: f64 = Vec3::random_between(0.0,0.5);
@@ -83,7 +84,7 @@ fn main() {
     world.push(Arc::new(Sphere::new(Vec3::new(-4.0,1.0,0.0),1.0,Arc::new(material_2))));
     world.push(Arc::new(Sphere::new(Vec3::new(4.0,1.0,0.0),1.0,Arc::new(material_3))));
 
-    let mut cam: Camera = Camera::new(16.0/9.0, 1200, 500, 50, 20.0, Vec3::new(13.0,2.0,3.0),
+    let mut cam: Camera = Camera::new(16.0/9.0, 400, 100, 50, 20.0, Vec3::new(13.0,2.0,3.0),
     Vec3::new(0.0,0.0,0.0),Vec3::new(0.0,1.0,0.0),0.6,10.0);
     cam.render(&world);
 }

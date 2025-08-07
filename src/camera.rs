@@ -183,8 +183,9 @@ impl Camera{
             self.defocus_disk_sample()
         };
         let ray_direction: Vec3 = pixel_sample - ray_origin;
+        let ray_time: f64 = Vec3::random_double();
 
-        Ray::new(ray_origin, ray_direction)
+        Ray::newt(ray_origin, ray_direction, ray_time)
     }
     fn random_double()->f64{
         rand::thread_rng().gen_range(0.0..1.0)
