@@ -7,6 +7,9 @@ mod sphere;
 mod interval;
 mod camera;
 mod material;
+mod bvh;
+mod aabb;
+mod texture;
 
 use std::sync::Arc;
 use vec3::Vec3 as Vec3;
@@ -22,6 +25,9 @@ use material::Lambertian as Lambertian;
 use material::Material as Material;
 use material::Metal as Metal;
 use material::Dielectric as Dielectric;
+use bvh::BVH as BVH;
+use texture::Checker_Texture as Checker_Texture;
+use texture::Solid_Color as Solid_Color;
 
 // fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
 //     let oc: Vec3 = center-r.origin();
@@ -47,11 +53,11 @@ use material::Dielectric as Dielectric;
 //     (1.0-a)*Vec3::new(1.0,1.0,1.0)+a*Vec3::new(0.5,0.7,1.0)
 // }
 
-fn main() {
+fn bouncing_spheres(){
     let mut world: Hittable_List = Hittable_List::new();
 
-    let ground_material: Lambertian = Lambertian::new(Vec3::new(0.5,0.5,0.5));
-    world.push(Arc::new(Sphere::new(Vec3::new(0.0,-1000.0,0.0),1000.0,Arc::new(ground_material))));
+    let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5,0.5,0.5)));
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,-1000.0,0.0),1000.0,ground_material)));
 
     for a in -11..11{
         for b in -11..11{
@@ -83,8 +89,33 @@ fn main() {
     world.push(Arc::new(Sphere::new(Vec3::new(0.0,1.0,0.0),1.0,Arc::new(material_1))));
     world.push(Arc::new(Sphere::new(Vec3::new(-4.0,1.0,0.0),1.0,Arc::new(material_2))));
     world.push(Arc::new(Sphere::new(Vec3::new(4.0,1.0,0.0),1.0,Arc::new(material_3))));
+    
+    let mut objects = world.objects().clone();
+    let bvh_root = Arc::new(BVH::new(&mut objects[..]));
+    let world = Hittable_List::newl(vec![bvh_root]);
+
+    let mut cam: Camera = Camera::new(16.0/9.0, 800, 100, 50, 30.0, Vec3::new(13.0,2.0,3.0),
+    Vec3::new(0.0,0.0,0.0),Vec3::new(0.0,1.0,0.0),0.6,10.0);
+    cam.render(&world);
+}
+
+fn checkered_spheres(){
+    let mut world: Hittable_List = Hittable_List::new();
+
+    let checker = Arc::new(Checker_Texture::news(0.32, Vec3::new(0.2,0.3,0.1),Vec3::new(0.9,0.9,0.9)));
+
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,-10.0,0.0),10.0,Arc::new(Lambertian::newt(checker.clone())))));
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,10.0,0.0),10.0,Arc::new(Lambertian::newt(checker)))));
+
+    let mut objects = world.objects().clone();
+    let bvh_root = Arc::new(BVH::new(&mut objects[..]));
+    let world = Hittable_List::newl(vec![bvh_root]);
 
     let mut cam: Camera = Camera::new(16.0/9.0, 400, 100, 50, 20.0, Vec3::new(13.0,2.0,3.0),
     Vec3::new(0.0,0.0,0.0),Vec3::new(0.0,1.0,0.0),0.6,10.0);
     cam.render(&world);
+}
+
+fn main() {
+    checkered_spheres();
 }

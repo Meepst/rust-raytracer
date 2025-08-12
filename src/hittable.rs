@@ -3,11 +3,13 @@ use crate::vec3::Vec3 as Vec3;
 use crate::interval::Interval as Interval;
 use crate::material::Material as Material;
 use crate::material::Metal as Metal;
+use crate::aabb::AABB as AABB;
 
 use std::sync::Arc;
 
 pub trait Hittable: Send + Sync{
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut Hit_record)->bool;
+    fn bounding_box(&self)->AABB;
 }
 
 
@@ -15,6 +17,8 @@ pub struct Hit_record{
     p: Vec3,
     normal: Vec3,
     t: f64,
+    pub u: f64,
+    pub v: f64,
     front_face: bool,
     pub mat: Arc<dyn Material>,
 }
@@ -25,6 +29,8 @@ impl Hit_record{
             p: Vec3::enew(),
             normal: Vec3::enew(),
             t: 0.0,
+            u: 0.0,
+            v: 0.0,
             front_face: false,
             mat: mat,
         }
@@ -37,6 +43,12 @@ impl Hit_record{
     }
     pub fn t(&self)->f64{
         self.t
+    }
+    pub fn u(&self)->f64{
+        self.u
+    }
+    pub fn v(&self)->f64{
+        self.v
     }
     pub fn front_face(&self)->bool{
         self.front_face
@@ -64,6 +76,8 @@ impl Clone for Hit_record{
             p: self.p,
             normal: self.normal,
             t: self.t,
+            u: self.u,
+            v: self.v,
             front_face: self.front_face,
             mat: Arc::clone(&self.mat),
         }

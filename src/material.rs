@@ -1,6 +1,12 @@
 use crate::ray::Ray as Ray;
 use crate::hittable::Hit_record as Hit_record;
 use crate::vec3::Vec3 as Vec3;
+use crate::texture::Solid_Color as Solid_Color;
+use crate::texture::Checker_Texture as Checker_Texture;
+use crate::texture::Texture as Texture;
+
+use std::sync::Arc;
+
 
 
 pub trait Material: Send + Sync{
@@ -10,7 +16,7 @@ pub trait Material: Send + Sync{
 }
 
 pub struct Lambertian{
-    albedo: Vec3,
+    tex: Arc<dyn Texture>,
 }
 
 pub struct Metal{
@@ -25,7 +31,12 @@ pub struct Dielectric{
 impl Lambertian{
     pub fn new(albedo: Vec3)->Lambertian{
         Lambertian{
-            albedo: albedo,
+            tex: Arc::new(Solid_Color::new(albedo)),
+        }
+    }
+    pub fn newt(tex: Arc<dyn Texture>)->Lambertian{
+        Lambertian{
+            tex: tex,
         }
     }
 }
@@ -65,7 +76,7 @@ impl Material for Lambertian{
         }
        
         *scattered = Ray::newt(rec.p(), scatter_direction, r_in.time());
-        *attenuation = self.albedo;
+        *attenuation = self.tex.value(rec.u(),rec.v(), rec.p());
         true
     }
 }

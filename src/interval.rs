@@ -1,6 +1,8 @@
+
+#[derive(Clone, Copy)]
 pub struct Interval{
-    min: f64,
-    max: f64,
+    pub min: f64,
+    pub max: f64,
 }
 
 impl Interval{
@@ -8,6 +10,20 @@ impl Interval{
         Interval{
             min: min,
             max: max,
+        }
+    }
+    pub fn newi(a: Interval, b: Interval)->Interval{
+        Interval{
+            min: if a.min() <= b.min(){
+                a.min()
+            }else{
+                b.min()
+            },
+            max: if a.max() >= b.max(){
+                a.max()
+            }else{
+                b.max()
+            },
         }
     }
     pub fn empty()->Interval{

@@ -6,26 +6,43 @@ use crate::interval::Interval as Interval;
 use crate::material::Material as Material;
 use crate::material::Lambertian as Lambertian;
 use crate::vec3::Vec3 as Vec3;
+use crate::aabb::AABB as AABB;
 
 pub struct Hittable_List{
-    objects: Vec<Arc<dyn Hittable + Sync + Send>>,
+    pub objects: Vec<Arc<dyn Hittable>>,
+    bbox: AABB,
 }
 
 impl Hittable_List{
     pub fn new()->Hittable_List{
         Hittable_List{
             objects: Vec::new(),
+            bbox: AABB::newi(Vec3::enew(),Vec3::enew()),
         }
     }
+    pub fn newl(objects: Vec<Arc<dyn Hittable>>)->Self{
+        let mut temp_bbox = objects[0].bounding_box();
+        for obj in &objects[1..]{
+            temp_bbox = AABB::newb(temp_bbox, obj.bounding_box());
+        }
+        let bbox = temp_bbox;
+
+        Hittable_List{
+            objects: objects, 
+            bbox: bbox,
+        }
+    }
+    pub fn objects(&self)->&Vec<Arc<dyn Hittable>>{
+        &self.objects
+    }
     pub fn push(&mut self, obj: Arc<dyn Hittable>){
-        self.objects.push(obj)
+        self.objects.push(obj.clone());
+        self.bbox = AABB::newb(self.bbox, obj.bounding_box())
     }
     pub fn clear(&mut self){
         self.objects.clear()
     }
 }
-
-static DUMMY_MAT: OnceLock<Arc<dyn Material>> = OnceLock::new();
 
 impl Hittable for Hittable_List{
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut Hit_record)->bool{
@@ -44,5 +61,8 @@ impl Hittable for Hittable_List{
         }
 
         hit_anything
+    }
+    fn bounding_box(&self)->AABB{
+        self.bbox
     }
 }
