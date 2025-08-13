@@ -1,4 +1,6 @@
 use crate::vec3::Vec3 as Vec3;
+use crate::image_tex::RtwImage as RtwImage;
+use crate::Interval;
 
 use std::sync::Arc;
 
@@ -14,6 +16,10 @@ pub struct Checker_Texture{
     inv_scale: f64,
     even: Arc<dyn Texture>,
     odd: Arc<dyn Texture>,
+}
+
+pub struct Image_Texture{
+    image: RtwImage,
 }
 
 impl Solid_Color{
@@ -46,6 +52,14 @@ impl Checker_Texture{
     }
 }
 
+impl Image_Texture{
+    pub fn new(filename: &str)->Self{
+        Self{
+            image: RtwImage::from_file(filename),
+        }
+    }
+}
+
 impl Texture for Solid_Color{
     fn value(&self, u: f64, v: f64, p: Vec3)->Vec3{
         self.albedo
@@ -66,4 +80,30 @@ impl Texture for Checker_Texture{
 
         self.odd.value(u, v, p)
     }
+}
+
+impl Texture for Image_Texture{
+    fn value(&self, u: f64, v: f64, p: Vec3)->Vec3{
+        if self.image.height() <= 0 {
+            return Vec3::new(0.0,1.0,1.0)
+        }
+
+        let u = Interval::new(0.0,1.0).clamp(u);
+        let v = 1.0 - Interval::new(0.0,1.0).clamp(v);
+
+        let i: usize = (u*self.image.width() as f64) as usize;
+        let j: usize = (v*self.image.height() as f64) as usize;
+        let pixel = self.image.pixel_data(i,j);
+        
+        let cscale = 1.0/255.0;
+        Vec3::new(cscale*pixel[0] as f64, cscale*pixel[1] as f64, cscale*pixel[2] as f64)
+    }
+}
+
+fn rgb_to_linear(c: u8)->f64{
+    let x = c as f64 / 255.0;
+    if x<=0.04045{
+       return x / 12.92
+    }
+    ((x+0.055)/1.055).powf(2.4)
 }

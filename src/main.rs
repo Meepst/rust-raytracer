@@ -10,6 +10,7 @@ mod material;
 mod bvh;
 mod aabb;
 mod texture;
+mod image_tex;
 
 use std::sync::Arc;
 use vec3::Vec3 as Vec3;
@@ -28,6 +29,7 @@ use material::Dielectric as Dielectric;
 use bvh::BVH as BVH;
 use texture::Checker_Texture as Checker_Texture;
 use texture::Solid_Color as Solid_Color;
+use texture::Image_Texture as Image_Texture;
 
 // fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
 //     let oc: Vec3 = center-r.origin();
@@ -116,6 +118,20 @@ fn checkered_spheres(){
     cam.render(&world);
 }
 
+fn earth(){
+    let mut world: Hittable_List = Hittable_List::new();
+    let earth_texture = Arc::new(Image_Texture::new("earthmap.jpg"));
+    let earth_surface = Arc::new(Lambertian::newt(earth_texture));
+    let globe = Arc::new(Sphere::new(Vec3::enew(), 2.0, earth_surface));
+
+    world.push(globe);
+
+    let mut cam: Camera = Camera::new(16.0/9.0,400,100,50,20.0,Vec3::new(0.0,0.0,12.0),
+    Vec3::enew(), Vec3::new(0.0,1.0,0.0), 0.0, 1.0);
+
+    cam.render(&world);
+}
+
 fn main() {
-    checkered_spheres();
+    earth();
 }
