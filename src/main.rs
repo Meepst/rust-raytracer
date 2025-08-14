@@ -11,6 +11,7 @@ mod bvh;
 mod aabb;
 mod texture;
 mod image_tex;
+mod perlin;
 
 use std::sync::Arc;
 use vec3::Vec3 as Vec3;
@@ -30,6 +31,7 @@ use bvh::BVH as BVH;
 use texture::Checker_Texture as Checker_Texture;
 use texture::Solid_Color as Solid_Color;
 use texture::Image_Texture as Image_Texture;
+use texture::Noise_Texture as Noise_Texture;
 
 // fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
 //     let oc: Vec3 = center-r.origin();
@@ -127,11 +129,24 @@ fn earth(){
     world.push(globe);
 
     let mut cam: Camera = Camera::new(16.0/9.0,400,100,50,20.0,Vec3::new(0.0,0.0,12.0),
-    Vec3::enew(), Vec3::new(0.0,1.0,0.0), 0.0, 1.0);
+    Vec3::enew(), Vec3::new(0.0,1.0,0.0), 0.0, 10.0);
+
+    cam.render(&world);
+}
+
+fn perlin_spheres(){
+    let mut world: Hittable_List = Hittable_List::new();
+
+    let perlin_texture = Arc::new(Noise_Texture::new(4.0));
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,-1000.0,0.0),1000.0,Arc::new(Lambertian::newt(perlin_texture.clone())))));
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,2.0,0.0),2.0,Arc::new(Lambertian::newt(perlin_texture)))));
+
+    let mut cam: Camera = Camera::new(16.0/9.0,400,500,50,20.0,Vec3::new(13.0,2.0,3.0),
+    Vec3::enew(), Vec3::new(0.0,1.0,0.0), 0.0, 10.0);
 
     cam.render(&world);
 }
 
 fn main() {
-    earth();
+    perlin_spheres();
 }

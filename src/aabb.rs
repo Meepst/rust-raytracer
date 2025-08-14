@@ -109,4 +109,7 @@ impl AABB{
         }
         true
     }
+    pub fn pad_to_minimums(&mut self){
+        
+    }
 }

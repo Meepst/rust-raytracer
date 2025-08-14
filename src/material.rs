@@ -77,6 +77,7 @@ impl Material for Lambertian{
        
         *scattered = Ray::newt(rec.p(), scatter_direction, r_in.time());
         *attenuation = self.tex.value(rec.u(),rec.v(), rec.p());
+        //eprintln!("Atten: {} {} {}", attenuation.x(), attenuation.y(), attenuation.z());
         true
     }
 }

@@ -1,6 +1,6 @@
 use std::env;
 use std::path::PathBuf;
-use stb_image::image::{loadf, LoadResult};
+use stb_image::image::{Image, load, LoadResult};
 
 pub struct RtwImage{
     bytes_per_pixel: usize,
@@ -49,17 +49,30 @@ impl RtwImage{
             return false
         }
 
-        match loadf(path.to_str().unwrap()){
-            LoadResult::ImageF32(Image::new(w, h, n, data))=>{
-                self.image_width = w;
-                self.image_height = h;
-                self.bytes_per_scanline = w*self.bytes_per_pixel;
-                self.fdata = Some(data);
+        match load(path){
+            LoadResult::ImageF32(body)=>{
+                eprintln!("f32");
+                self.image_width = body.width;
+                self.image_height = body.height;
+                self.bytes_per_scanline = body.width*self.bytes_per_pixel;
+                self.fdata = Some(body.data);
                 self.convert_to_bytes();
-                true 
-            }_=> false,
+                true
+            }
+            LoadResult::ImageU8(body)=>{
+                eprintln!("u8");
+                self.image_width = body.width;
+                self.image_height = body.height;
+                self.bytes_per_scanline = body.width*self.bytes_per_pixel;
+                self.bdata = Some(body.data);
+                self.fdata = None;
+                true
+            }
+            LoadResult::Error(_)=>{
+                eprintln!("failed to load image");
+                false
+            }
         }
-        
     }
     pub fn width(&self)->usize{
         self.image_width

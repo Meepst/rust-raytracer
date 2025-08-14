@@ -77,7 +77,7 @@ impl Camera{
         let theta: f64 = Self::degrees_to_radians(self.vfov);
         let h: f64 = (theta/2.0).tan();
         let viewport_height: f64 = 2.0*h*self.focus_dist;
-        let viewport_width: f64 = viewport_height * (self.image_width / self.image_height) as f64;
+        let viewport_width: f64 = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
         self.w = Vec3::unit_vector(&(self.lookfrom-self.lookat));
         self.u = Vec3::unit_vector(&self.vup.cross(self.w));
