@@ -12,7 +12,6 @@ pub trait Hittable: Send + Sync{
     fn bounding_box(&self)->AABB;
 }
 
-
 pub struct Hit_record{
     p: Vec3,
     normal: Vec3,
@@ -21,6 +20,12 @@ pub struct Hit_record{
     pub v: f64,
     front_face: bool,
     pub mat: Arc<dyn Material>,
+}
+
+pub struct Translate{
+    object: Arc<dyn Hittable>,
+    offset: Vec3,
+    bbox: AABB,
 }
 
 impl Hit_record{
@@ -67,6 +72,32 @@ impl Hit_record{
         }else{
             -*outward_normal
         };
+    }
+}
+
+impl Translate{
+    pub fn new(object: Arc<dyn Hittable>, offset: Vec3)->Translate{
+        Self{
+            object: object,
+            offset: offset,
+            bbox: object.bounding_box()+offset,
+        }
+    }
+}
+
+impl Hittable for Translate{
+    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut Hit_record)->bool{
+        let offset_r: Ray = Ray::new(r.origin()-self.offset,r.direction(),r.time());
+        if !self.object.hit(offset_r, ray_t, rec){
+            return false
+        }
+
+        rec.p += offset;
+
+        true
+    }
+    fn bounding_box(&self)->AABB{
+        self.bbox
     }
 }
 

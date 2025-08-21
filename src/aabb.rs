@@ -12,14 +12,12 @@ pub struct AABB{
 
 impl AABB{
     pub fn new(x: Interval, y: Interval, z: Interval)->AABB{
-        AABB{
-            x: x,
-            y: y,
-            z: z,
-        }
+        let mut ret: AABB = Self{x,y,z};
+        ret.pad_to_minimums();
+        ret
     }
     pub fn newi(a: Vec3, b: Vec3)->AABB{
-        AABB{
+        let mut ret: AABB = AABB{
             x:  if a.x() <= b.x(){
                     Interval::new(a.x(),b.x())
                 }else{Interval::new(b.x(),a.x())},
@@ -29,7 +27,9 @@ impl AABB{
             z:  if a.z() <= b.z(){
                     Interval::new(a.z(),b.z())
                 }else{Interval::new(b.z(),a.z())},
-        }
+        };
+        ret.pad_to_minimums();
+        ret
     }
     pub fn newb(box0: AABB, box1: AABB)->AABB{
         AABB{
@@ -110,6 +110,15 @@ impl AABB{
         true
     }
     pub fn pad_to_minimums(&mut self){
-        
+        let delta: f64 = 0.0001;
+        if self.x.size() < delta{
+            self.x = self.x.expand(delta);
+        }
+        if self.y.size() < delta{
+            self.y = self.y.expand(delta);
+        }
+        if self.z.size() < delta{
+            self.z = self.z.expand(delta);
+        }
     }
 }

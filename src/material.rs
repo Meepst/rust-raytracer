@@ -13,6 +13,7 @@ pub trait Material: Send + Sync{
     fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
         false
     }
+    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3;
 }
 
 pub struct Lambertian{
@@ -26,6 +27,10 @@ pub struct Metal{
 
 pub struct Dielectric{
     refraction_index: f64,
+}
+
+pub struct Diffuse_Light{
+    tex: Arc<dyn Texture>,
 }
 
 impl Lambertian{
@@ -67,6 +72,19 @@ impl Dielectric{
     }
 }
 
+impl Diffuse_Light{
+    pub fn new(tex: Arc<dyn Texture>)->Self{
+        Self{
+            tex: tex,
+        }
+    }
+    pub fn newc(emit: Vec3)->Self{
+        Self{
+            tex: Arc::new(Solid_Color::new(emit)),
+        }
+    }
+}
+
 impl Material for Lambertian{
     fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
         let mut scatter_direction: Vec3 = rec.normal()+Vec3::random_unit_vector();
@@ -80,6 +98,9 @@ impl Material for Lambertian{
         //eprintln!("Atten: {} {} {}", attenuation.x(), attenuation.y(), attenuation.z());
         true
     }
+    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+        Vec3::enew()
+    }
 }
 
 impl Material for Metal{
@@ -88,6 +109,9 @@ impl Material for Metal{
         *scattered = Ray::newt(rec.p(), reflected, r_in.time());
         *attenuation = self.albedo;
         true
+    }
+    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+        Vec3::enew()
     }
 }
 
@@ -114,5 +138,17 @@ impl Material for Dielectric{
 
         *scattered = Ray::newt(rec.p(), direction, r_in.time());
         true
+    }
+    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+        Vec3::enew()
+    }
+}
+
+impl Material for Diffuse_Light{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+        false
+    }
+    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+        self.tex.value(u,v,p)
     }
 }
