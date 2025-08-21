@@ -3,6 +3,8 @@ use crate::vec3::Vec3 as Vec3;
 use crate::ray::Ray as Ray;
 use crate::hittable::Hittable as Hittable;
 
+use std::ops::Add;
+
 #[derive(Clone, Copy)]
 pub struct AABB{
     x: Interval,
@@ -120,5 +122,13 @@ impl AABB{
         if self.z.size() < delta{
             self.z = self.z.expand(delta);
         }
+    }
+}
+
+impl Add<Vec3> for AABB{
+    type Output = AABB;
+
+    fn add(self, offset: Vec3)->Self{
+        Self::new(self.x+offset.x(),self.y+offset.y(),self.z+offset.z())
     }
 }

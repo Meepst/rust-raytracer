@@ -1,6 +1,8 @@
 use std::ops::{Add, Sub, Neg, Mul, Div, AddAssign, DivAssign, MulAssign, Index};
 use rand::Rng; 
 
+use crate::aabb::AABB as AABB;
+
 #[derive(Debug,Clone,Copy)]
 pub struct Vec3 {
     e: [f64; 3],
@@ -204,5 +206,12 @@ impl MulAssign<f64> for Vec3{
         self.e[0]*=scalar;
         self.e[1]*=scalar;
         self.e[2]*=scalar;
+    }
+}
+
+impl Add<AABB> for Vec3{
+    type Output = AABB;
+    fn add(self, bbox: AABB)->AABB{
+        bbox+self
     }
 }

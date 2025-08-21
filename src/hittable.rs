@@ -78,7 +78,7 @@ impl Hit_record{
 impl Translate{
     pub fn new(object: Arc<dyn Hittable>, offset: Vec3)->Translate{
         Self{
-            object: object,
+            object: object.clone(),
             offset: offset,
             bbox: object.bounding_box()+offset,
         }
@@ -87,12 +87,12 @@ impl Translate{
 
 impl Hittable for Translate{
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut Hit_record)->bool{
-        let offset_r: Ray = Ray::new(r.origin()-self.offset,r.direction(),r.time());
-        if !self.object.hit(offset_r, ray_t, rec){
+        let offset_r: Ray = Ray::newt(r.origin()-self.offset,r.direction(),r.time());
+        if !self.object.hit(&offset_r, ray_t, rec){
             return false
         }
 
-        rec.p += offset;
+        rec.p += self.offset;
 
         true
     }

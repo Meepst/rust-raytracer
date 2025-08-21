@@ -1,3 +1,4 @@
+use std::ops::Add;
 
 #[derive(Clone, Copy)]
 pub struct Interval{
@@ -67,5 +68,21 @@ impl Interval{
             min: self.min - padding,
             max: self.max - padding,
         }
+    }
+}
+
+impl Add<f64> for Interval{
+    type Output = Interval;
+
+    fn add(self, displacement: f64)->Self{
+        Self::new(self.min+displacement,self.max+displacement)
+    }
+}
+
+impl Add<Interval> for f64{
+    type Output = Interval;
+
+    fn add(self, ival: Interval)->Interval{
+        ival+self
     }
 }
