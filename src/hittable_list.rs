@@ -39,6 +39,11 @@ impl Hittable_List{
         self.objects.push(obj.clone());
         self.bbox = AABB::newb(self.bbox, obj.bounding_box())
     }
+    pub fn load(&mut self, list: Arc<dyn Hittable>){
+        for obj in list.object{
+            self.push(*obj);
+        }
+    }
     pub fn clear(&mut self){
         self.objects.clear()
     }

@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Neg, Mul, Div, AddAssign, DivAssign, MulAssign, Index};
+use std::ops::{Add, Sub, Neg, Mul, Div, AddAssign, DivAssign, MulAssign, Index, IndexMut};
 use rand::Rng; 
 
 use crate::aabb::AABB as AABB;
@@ -213,5 +213,16 @@ impl Add<AABB> for Vec3{
     type Output = AABB;
     fn add(self, bbox: AABB)->AABB{
         bbox+self
+    }
+}
+
+impl IndexMut<usize> for Vec3{
+    fn index_mut(&mut self, index: usize)->&mut Self::Output{
+        match index{
+            0=> &mut self.e[0],
+            1=> &mut self.e[1],
+            2=> &mut self.e[2],
+            _=> panic!(),
+        }
     }
 }

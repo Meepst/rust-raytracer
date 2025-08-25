@@ -35,6 +35,8 @@ use texture::Image_Texture as Image_Texture;
 use texture::Noise_Texture as Noise_Texture;
 use quad::Quad as Quad;
 use material::Diffuse_Light as Diffuse_Light;
+use hittable::RotateY as RotateY;
+use hittable::Translate as Translate;
 
 // fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
 //     let oc: Vec3 = center-r.origin();
@@ -203,8 +205,12 @@ fn cornell_box(){
     world.push(Arc::new(Quad::new(Vec3::new(555.0,555.0,555.0), Vec3::new(-555.0,0.0,0.0),   Vec3::new(0.0,0.0,-555.0), white.clone())));
     world.push(Arc::new(Quad::new(Vec3::new(0.0,0.0,555.0), Vec3::new(555.0,0.0,0.0),   Vec3::new(0.0,555.0,0.0), white.clone())));
 
-    Quad::cube(Vec3::new(130.0,0.0,65.0),Vec3::new(295.0,165.0,230.0),white.clone(),&mut world);
-    Quad::cube(Vec3::new(265.0,0.0,295.0),Vec3::new(430.0,330.0,400.0),white,&mut world);
+    let mut box1: Arc<dyn Hittable> = Quad::cube(Vec3::new(130.0,0.0,65.0),Vec3::new(295.0,165.0,230.0),white.clone());
+    box1 = Arc::new(RotateY::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    world.load(box1);
+
+    let mut box2 = Quad::cube(Vec3::new(265.0,0.0,295.0),Vec3::new(430.0,330.0,400.0),white);
 
     let mut cam: Camera = Camera::new(1.0,600,200,50,40.0,Vec3::new(278.0,278.0,-800.0),
     Vec3::new(278.0,278.0,0.0), Vec3::new(0.0,1.0,0.0), 0.0, 10.0, Vec3::enew());
