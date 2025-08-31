@@ -14,11 +14,11 @@ pub trait Hittable: Send + Sync{
 
 pub struct Hit_record{
     p: Vec3,
-    normal: Vec3,
+    pub normal: Vec3,
     t: f64,
     pub u: f64,
     pub v: f64,
-    front_face: bool,
+    pub front_face: bool,
     pub mat: Arc<dyn Material>,
 }
 

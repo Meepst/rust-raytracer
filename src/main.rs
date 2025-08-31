@@ -13,6 +13,7 @@ mod texture;
 mod image_tex;
 mod perlin;
 mod quad;
+mod constant_medium;
 
 use std::sync::Arc;
 use vec3::Vec3 as Vec3;
@@ -37,6 +38,14 @@ use quad::Quad as Quad;
 use material::Diffuse_Light as Diffuse_Light;
 use hittable::RotateY as RotateY;
 use hittable::Translate as Translate;
+use quad::Cube as Cube;
+use constant_medium::ConstantMedium as ConstantMedium;
+
+use image::io::Reader as ImageReader;
+use image::{ImageFormat, ImageError};
+use std::path::Path;
+use std::fs;
+use std::io::Cursor;
 
 // fn hit_sphere(center: Vec3, radius: f64, r: &Ray)->f64{
 //     let oc: Vec3 = center-r.origin();
@@ -100,8 +109,9 @@ fn bouncing_spheres(){
     world.push(Arc::new(Sphere::new(Vec3::new(4.0,1.0,0.0),1.0,Arc::new(material_3))));
     
     let mut objects = world.objects().clone();
-    let bvh_root = Arc::new(BVH::new(&mut objects[..]));
-    let world = Hittable_List::newl(vec![bvh_root]);
+    let bvh_root = Arc::new(BVH::new(objects));
+    let mut world = Hittable_List::new();
+    world.push(bvh_root);
 
     let mut cam: Camera = Camera::new(16.0/9.0, 800, 100, 50, 30.0, Vec3::new(13.0,2.0,3.0),
     Vec3::new(0.0,0.0,0.0),Vec3::new(0.0,1.0,0.0),0.6,10.0,Vec3::new(0.7,0.8,1.0));
@@ -117,8 +127,9 @@ fn checkered_spheres(){
     world.push(Arc::new(Sphere::new(Vec3::new(0.0,10.0,0.0),10.0,Arc::new(Lambertian::newt(checker)))));
 
     let mut objects = world.objects().clone();
-    let bvh_root = Arc::new(BVH::new(&mut objects[..]));
-    let world = Hittable_List::newl(vec![bvh_root]);
+    let bvh_root = Arc::new(BVH::new(objects));
+    let mut world = Hittable_List::new();
+    world.push(bvh_root);
 
     let mut cam: Camera = Camera::new(16.0/9.0, 400, 100, 50, 20.0, Vec3::new(13.0,2.0,3.0),
     Vec3::new(0.0,0.0,0.0),Vec3::new(0.0,1.0,0.0),0.6,10.0,Vec3::new(0.7,0.8,1.0));
@@ -205,12 +216,21 @@ fn cornell_box(){
     world.push(Arc::new(Quad::new(Vec3::new(555.0,555.0,555.0), Vec3::new(-555.0,0.0,0.0),   Vec3::new(0.0,0.0,-555.0), white.clone())));
     world.push(Arc::new(Quad::new(Vec3::new(0.0,0.0,555.0), Vec3::new(555.0,0.0,0.0),   Vec3::new(0.0,555.0,0.0), white.clone())));
 
-    let mut box1: Arc<dyn Hittable> = Quad::cube(Vec3::new(130.0,0.0,65.0),Vec3::new(295.0,165.0,230.0),white.clone());
-    box1 = Arc::new(RotateY::new(box1, 15.0));
-    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
-    world.load(box1);
+    //let mut box1: Cube = Cube::new(Vec3::enew(),Vec3::new(165.0,330.0,165.0),white.clone());
+    // box1 = Arc::new(RotateY::new(box1, 15.0));
+    // box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    // for side in box1.sides {
+    //     let mut tmpSide: Arc<dyn Hittable> = Arc::new(RotateY::new(side, 15.0));
+    //     tmpSide = Arc::new(Translate::new(tmpSide.clone(), Vec3::new(265.0,0.0,295.0)));
+    //     world.push(tmpSide);
+    // }
 
-    let mut box2 = Quad::cube(Vec3::new(265.0,0.0,295.0),Vec3::new(430.0,330.0,400.0),white);
+    // let mut box2: Cube = Cube::new(Vec3::enew(),Vec3::new(165.0,165.0,165.0), white);
+    // for side in box2.sides {
+    //     let mut tmpSide: Arc<dyn Hittable> = Arc::new(RotateY::new(side, -18.0));
+    //     tmpSide = Arc::new(Translate::new(tmpSide.clone(), Vec3::new(130.0,0.0,65.0)));
+    //     world.push(tmpSide);
+    // }
 
     let mut cam: Camera = Camera::new(1.0,600,200,50,40.0,Vec3::new(278.0,278.0,-800.0),
     Vec3::new(278.0,278.0,0.0), Vec3::new(0.0,1.0,0.0), 0.0, 10.0, Vec3::enew());
@@ -218,6 +238,137 @@ fn cornell_box(){
     cam.render(&world);
 }
 
+fn cornell_smoke(){
+    let mut world: Hittable_List = Hittable_List::new();
+
+    let red = Arc::new(Lambertian::new(Vec3::new(0.65,0.05,0.05)));
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73,0.73,0.73)));
+    let green = Arc::new(Lambertian::new(Vec3::new(0.12,0.45,0.15)));
+    let light = Arc::new(Diffuse_Light::newc(Vec3::new(15.0,15.0,15.0)));
+
+    world.push(Arc::new(Quad::new(Vec3::new(555.0,0.0,0.0), Vec3::new(0.0,555.0,0.0),   Vec3::new(0.0,0.0,555.0), green)));
+    world.push(Arc::new(Quad::new(Vec3::new(0.0,0.0,0.0),   Vec3::new(0.0,555.0,0.0),   Vec3::new(0.0,0.0,555.0), red)));
+    world.push(Arc::new(Quad::new(Vec3::new(343.0,554.0,332.0), Vec3::new(-130.0,0.0,0.0),   Vec3::new(0.0,0.0,-105.0), light)));
+    world.push(Arc::new(Quad::new(Vec3::new(0.0,0.0,0.0),   Vec3::new(555.0,0.0,0.0),   Vec3::new(0.0,0.0,555.0), white.clone())));
+    world.push(Arc::new(Quad::new(Vec3::new(555.0,555.0,555.0), Vec3::new(-555.0,0.0,0.0),   Vec3::new(0.0,0.0,-555.0), white.clone())));
+    world.push(Arc::new(Quad::new(Vec3::new(0.0,0.0,555.0), Vec3::new(555.0,0.0,0.0),   Vec3::new(0.0,555.0,0.0), white.clone())));
+
+    let mut box1: Arc<dyn Hittable> = Cube::new(Vec3::enew(),Vec3::new(165.0,330.0,165.0),white.clone());
+    // box1 = Arc::new(RotateY::new(box1, 15.0));
+    // box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    
+    box1 = Arc::new(RotateY::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    box1 = Arc::new(ConstantMedium::newc(box1, 0.01, Vec3::enew()));
+    world.push(box1);
+    
+
+    let mut box2: Arc<dyn Hittable>  = Cube::new(Vec3::enew(),Vec3::new(165.0,165.0,165.0), white);
+   
+    box2 = Arc::new(RotateY::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
+    box2 = Arc::new(ConstantMedium::newc(box2, 0.01, Vec3::new(1.0,1.0,1.0)));
+    world.push(box2);
+
+    let mut cam: Camera = Camera::new(1.0,600,200,50,40.0,Vec3::new(278.0,278.0,-800.0),
+    Vec3::new(278.0,278.0,0.0), Vec3::new(0.0,1.0,0.0), 0.0, 10.0, Vec3::enew());
+
+    cam.render(&world);
+}
+
+fn final_scene(){
+    let mut boxes1: Hittable_List = Hittable_List::new();
+    let ground = Arc::new(Lambertian::new(Vec3::new(0.48,0.83,0.53)));
+
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side{
+        for j in 0..boxes_per_side{
+            let w = 100.0;
+            let x0 = -1000.0+(i as f64 * w);
+            let z0 = -1000.0+(j as f64 * w);
+            let y0 = 0.0;
+            let x1 = x0+w;
+            let y1 = Vec3::random_between(1.0,101.0);
+            let z1 = z0+w;
+
+            boxes1.push(Cube::new(Vec3::new(x0,y0,z0),Vec3::new(x1,y1,z1),ground.clone()));
+        }
+    }
+    
+    let mut world = Hittable_List::new();
+    world.push(Arc::new(BVH::new(boxes1.objects)));
+
+    let light = Arc::new(Diffuse_Light::newc(Vec3::new(7.0,7.0,7.0)));
+    world.push(Arc::new(Quad::new(Vec3::new(123.0,554.0,147.0),Vec3::new(300.0,0.0,0.0),Vec3::new(0.0,0.0,265.0),light)));
+
+    let center1 = Vec3::new(400.0,400.0,200.0);
+    let center2 = center1+Vec3::new(30.0,0.0,0.0);
+    let sphere_mat = Arc::new(Lambertian::new(Vec3::new(0.7,0.3,0.1)));
+    world.push(Arc::new(Sphere::newt(center1, center2, 50.0, sphere_mat)));
+
+    world.push(Arc::new(Sphere::new(Vec3::new(260.0,150.0,45.0), 50.0,Arc::new(Dielectric::new(1.5)))));
+    world.push(Arc::new(Sphere::new(Vec3::new(0.0,150.0,145.0),50.0,Arc::new(Metal::new(Vec3::new(0.8,0.8,0.9), 1.0)))));
+
+    let boundary = Arc::new(Sphere::new(Vec3::new(360.0,150.0,145.0),70.0,Arc::new(Dielectric::new(1.5))));
+    world.push(boundary.clone());
+    world.push(Arc::new(ConstantMedium::newc(boundary.clone(), 0.2, Vec3::new(0.2,0.4,0.0))));
+
+    let boundary = Arc::new(Sphere::new(Vec3::enew(),5000.0,Arc::new(Dielectric::new(1.5))));
+    world.push(Arc::new(ConstantMedium::newc(boundary, 0.0001, Vec3::new(1.0,1.0,1.0))));
+
+    let earth_mat = Arc::new(Lambertian::newt(Arc::new(Image_Texture::new("earthmap.jpg"))));
+    world.push(Arc::new(Sphere::new(Vec3::new(400.0,200.0,400.0),100.0,earth_mat)));
+
+    let perlin_mat = Arc::new(Noise_Texture::new(0.2));
+    world.push(Arc::new(Sphere::new(Vec3::new(220.0,280.0,300.0), 80.0, Arc::new(Lambertian::newt(perlin_mat)))));
+
+    let mut boxes2: Hittable_List = Hittable_List::new();
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73,0.73,0.73)));
+    let ns = 1000;
+    for k in 0..ns{
+        boxes2.push(Arc::new(Sphere::new(Vec3::random_vars(0.0,165.0),10.0,white.clone())));
+    }
+
+    world.push(Arc::new(Translate::new(Arc::new(RotateY::new(Arc::new(BVH::new(boxes2.objects)), 15.0)), Vec3::new(-100.0,270.0,395.0))));
+
+    let mut cam: Camera = Camera::new(1.0,1080,10000,40,40.0,Vec3::new(478.0,278.0,-600.0),
+    Vec3::new(278.0,278.0,0.0), Vec3::new(0.0,1.0,0.0), 0.0, 10.0, Vec3::enew());
+
+    cam.render(&world);
+}
+
+fn ppm_to_png(ppm_path: &Path, png_path: &Path) -> Result<(), ImageError> {
+       let bytes = fs::read(ppm_path).expect("Failed to read file");
+
+    // Detect UTF-16LE BOM (0xFF 0xFE) or implicit UTF-16LE (P\0 3\0)
+    let is_utf16le = bytes.starts_with(&[0xFF, 0xFE]) || bytes.get(1) == Some(&0x00);
+
+    // Convert UTF-16LE to plain UTF-8 string
+    let ascii_bytes = if is_utf16le {
+        let utf16: Vec<u16> = bytes
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect();
+        let content = String::from_utf16(&utf16).expect("Bad UTF-16LE");
+        content.into_bytes() // now it's valid ASCII-like bytes
+    } else {
+        bytes
+    };
+
+    // Now feed valid PNM bytes to image crate
+    let img = ImageReader::with_format(Cursor::new(ascii_bytes), ImageFormat::Pnm)
+        .decode()?;
+
+    img.save(png_path)?;
+    Ok(())
+}
+
 fn main() {
-    cornell_box();
+    let input_file = Path::new("byte_final_scene.ppm");
+    let output_file = Path::new("final_scene.png");
+
+    match ppm_to_png(input_file, output_file){
+        Ok(_)=>eprintln!("Success"),
+        Err(e)=>eprintln!("failed: {}",e),
+    }
 }

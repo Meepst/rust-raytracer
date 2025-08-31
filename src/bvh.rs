@@ -16,7 +16,7 @@ pub struct BVH{
 }
 
 impl BVH{
-    pub fn new(objects: &mut [Arc<dyn Hittable>])-> Self{
+    pub fn new(mut objects: Vec<Arc<dyn Hittable>>)-> Self{
         let mut bbox: AABB = AABB::empty();
         for obj in &mut *objects{
             bbox = AABB::newb(bbox, obj.bounding_box());
@@ -54,8 +54,8 @@ impl BVH{
             objects.sort_by(comparator);
 
             let mid = object_span / 2;
-            let left = Arc::new(BVH::new(&mut objects[..mid]));
-            let right = Arc::new(BVH::new(&mut objects[mid..]));
+            let left = Arc::new(BVH::new(objects[..mid].to_vec()));
+            let right = Arc::new(BVH::new(objects[mid..].to_vec()));
 
             let bbox = AABB::newb(left.bounding_box(), right.bounding_box());
 

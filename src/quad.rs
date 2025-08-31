@@ -20,6 +20,11 @@ pub struct Quad{
     bbox: AABB,
 }
 
+// box from RTW but Box is a reserved word
+pub struct Cube{
+    pub sides: Vec<Arc<dyn Hittable>>,
+}
+
 impl Quad{
     pub fn new(Q: Vec3, u: Vec3, v: Vec3, mat: Arc<dyn Material>)->Self{
         let mut ret: Quad = Self{
@@ -41,25 +46,6 @@ impl Quad{
         ret.set_bounding_box();
         ret
     }
-    pub fn cube(a: Vec3, b: Vec3, mat: Arc<dyn Material>)->Arc<dyn Hittable>{
-        let min = Vec3::new(a.x().min(b.x()),a.y().min(b.y()),a.z().min(b.z()));
-        let max = Vec3::new(a.x().max(b.x()),a.y().max(b.y()),a.z().max(b.z()));
-
-        let dx = Vec3::new(max.x()-min.x(),0.0,0.0);
-        let dy = Vec3::new(0.0, max.y()-min.y(), 0.0);
-        let dz = Vec3::new(0.0,0.0,max.z()-min.z());
-
-        let mut world = Hittable_List::new();
-
-        world.push(Arc::new(Quad::new(Vec3::new(min.x(),min.y(),max.z()),dx,dy,mat.clone())));//front
-        world.push(Arc::new(Quad::new(Vec3::new(max.x(),min.y(),max.z()),-dz,dy,mat.clone())));//right
-        world.push(Arc::new(Quad::new(Vec3::new(max.x(),min.y(),min.z()),-dx,dy,mat.clone())));//back
-        world.push(Arc::new(Quad::new(Vec3::new(min.x(),min.y(),min.z()),dz,dy,mat.clone())));//left
-        world.push(Arc::new(Quad::new(Vec3::new(min.x(),max.y(),max.z()),dx,-dz,mat.clone())));//top
-        world.push(Arc::new(Quad::new(Vec3::new(min.x(),min.y(),min.z()),dx,dz,mat)));//bottom
-
-        world
-    }
     fn set_bounding_box(&mut self){
         let bbox_diag1: AABB = AABB::newi(self.Q, self.Q+self.u+self.v);
         let bbox_diag2: AABB = AABB::newi(self.Q+self.u,self.Q+self.v);
@@ -75,6 +61,28 @@ impl Quad{
         rec.u = a;
         rec.v = b;
         true
+    }
+}
+
+impl Cube{
+    pub fn new(a: Vec3, b: Vec3, mat: Arc<dyn Material>)->Arc<Hittable_List>{
+        let min = Vec3::new(a.x().min(b.x()),a.y().min(b.y()),a.z().min(b.z()));
+        let max = Vec3::new(a.x().max(b.x()),a.y().max(b.y()),a.z().max(b.z()));
+
+        let dx = Vec3::new(max.x()-min.x(),0.0,0.0);
+        let dy = Vec3::new(0.0, max.y()-min.y(), 0.0);
+        let dz = Vec3::new(0.0,0.0,max.z()-min.z());
+        
+        let mut retCube = Hittable_List::new();
+
+        retCube.push(Arc::new(Quad::new(Vec3::new(min.x(),min.y(),max.z()),dx,dy,mat.clone())));//front
+        retCube.push(Arc::new(Quad::new(Vec3::new(max.x(),min.y(),max.z()),-dz,dy,mat.clone())));//right
+        retCube.push(Arc::new(Quad::new(Vec3::new(max.x(),min.y(),min.z()),-dx,dy,mat.clone())));//back
+        retCube.push(Arc::new(Quad::new(Vec3::new(min.x(),min.y(),min.z()),dz,dy,mat.clone())));//left
+        retCube.push(Arc::new(Quad::new(Vec3::new(min.x(),max.y(),max.z()),dx,-dz,mat.clone())));//top
+        retCube.push(Arc::new(Quad::new(Vec3::new(min.x(),min.y(),min.z()),dx,dz,mat)));//bottom
+
+        Arc::new(retCube)
     }
 }
 
@@ -111,3 +119,4 @@ impl Hittable for Quad{
         self.bbox
     }
 }
+

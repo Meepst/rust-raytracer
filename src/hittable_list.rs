@@ -20,15 +20,15 @@ impl Hittable_List{
             bbox: AABB::newi(Vec3::enew(),Vec3::enew()),
         }
     }
-    pub fn newl(objects: Vec<Arc<dyn Hittable>>)->Self{
-        let mut temp_bbox = objects[0].bounding_box();
-        for obj in &objects[1..]{
+    pub fn load(list: Vec<Arc<dyn Hittable>>)->Self{
+        let mut temp_bbox = list[0].bounding_box();
+        for obj in &list[1..]{
             temp_bbox = AABB::newb(temp_bbox, obj.bounding_box());
         }
         let bbox = temp_bbox;
 
         Hittable_List{
-            objects: objects, 
+            objects: list.clone(), 
             bbox: bbox,
         }
     }
@@ -38,11 +38,6 @@ impl Hittable_List{
     pub fn push(&mut self, obj: Arc<dyn Hittable>){
         self.objects.push(obj.clone());
         self.bbox = AABB::newb(self.bbox, obj.bounding_box())
-    }
-    pub fn load(&mut self, list: Arc<dyn Hittable>){
-        for obj in list.object{
-            self.push(*obj);
-        }
     }
     pub fn clear(&mut self){
         self.objects.clear()

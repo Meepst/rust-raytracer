@@ -33,6 +33,10 @@ pub struct Diffuse_Light{
     tex: Arc<dyn Texture>,
 }
 
+pub struct Isotropic{
+    tex: Arc<dyn Texture>,
+}
+
 impl Lambertian{
     pub fn new(albedo: Vec3)->Lambertian{
         Lambertian{
@@ -82,6 +86,15 @@ impl Diffuse_Light{
         Self{
             tex: Arc::new(Solid_Color::new(emit)),
         }
+    }
+}
+
+impl Isotropic{
+    pub fn new(tex: Arc<dyn Texture>)->Self{
+        Self{tex}
+    }
+    pub fn newc(albedo: Vec3)->Self{
+        Self{tex: Arc::new(Solid_Color::new(albedo)),}
     }
 }
 
@@ -150,5 +163,16 @@ impl Material for Diffuse_Light{
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         self.tex.value(u,v,p)
+    }
+}
+
+impl Material for Isotropic{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+        *scattered = Ray::newt(rec.p(), Vec3::random_unit_vector(), r_in.time());
+        *attenuation = self.tex.value(rec.u(), rec.v(), rec.p());
+        true
+    }
+    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+        Vec3::enew()
     }
 }
