@@ -4,6 +4,7 @@ use crate::vec3::Vec3 as Vec3;
 use crate::texture::Solid_Color as Solid_Color;
 use crate::texture::Checker_Texture as Checker_Texture;
 use crate::texture::Texture as Texture;
+use crate::onb::ONB as ONB;
 
 use std::sync::Arc;
 
@@ -14,6 +15,7 @@ pub trait Material: Send + Sync{
         false
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3;
+    fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64;
 }
 
 pub struct Lambertian{
@@ -114,6 +116,14 @@ impl Material for Lambertian{
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
+    fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
+        let cos_theta = Vec3::dot(&rec.normal, Vec3::unit_vector(&scattered.direction()));
+        if cos_theta < 0.0{
+            return 0.0
+        }else{
+            cos_theta / std::f64::consts::PI
+        }
+    }
 }
 
 impl Material for Metal{
@@ -125,6 +135,9 @@ impl Material for Metal{
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
+    }
+    fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
+        0.0
     }
 }
 
@@ -155,6 +168,9 @@ impl Material for Dielectric{
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
+    fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
+        0.0
+    }
 }
 
 impl Material for Diffuse_Light{
@@ -163,6 +179,9 @@ impl Material for Diffuse_Light{
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         self.tex.value(u,v,p)
+    }
+    fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
+        0.0
     }
 }
 
@@ -174,5 +193,8 @@ impl Material for Isotropic{
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
+    }
+    fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
+        0.0
     }
 }

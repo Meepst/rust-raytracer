@@ -14,6 +14,7 @@ mod image_tex;
 mod perlin;
 mod quad;
 mod constant_medium;
+mod onb;
 
 use std::sync::Arc;
 use vec3::Vec3 as Vec3;
@@ -216,23 +217,22 @@ fn cornell_box(){
     world.push(Arc::new(Quad::new(Vec3::new(555.0,555.0,555.0), Vec3::new(-555.0,0.0,0.0),   Vec3::new(0.0,0.0,-555.0), white.clone())));
     world.push(Arc::new(Quad::new(Vec3::new(0.0,0.0,555.0), Vec3::new(555.0,0.0,0.0),   Vec3::new(0.0,555.0,0.0), white.clone())));
 
-    //let mut box1: Cube = Cube::new(Vec3::enew(),Vec3::new(165.0,330.0,165.0),white.clone());
+    let mut box1: Arc<dyn Hittable> = Cube::new(Vec3::enew(),Vec3::new(165.0,330.0,165.0),white.clone());
     // box1 = Arc::new(RotateY::new(box1, 15.0));
     // box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
-    // for side in box1.sides {
-    //     let mut tmpSide: Arc<dyn Hittable> = Arc::new(RotateY::new(side, 15.0));
-    //     tmpSide = Arc::new(Translate::new(tmpSide.clone(), Vec3::new(265.0,0.0,295.0)));
-    //     world.push(tmpSide);
-    // }
+    
+    box1 = Arc::new(RotateY::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    world.push(box1);
+    
 
-    // let mut box2: Cube = Cube::new(Vec3::enew(),Vec3::new(165.0,165.0,165.0), white);
-    // for side in box2.sides {
-    //     let mut tmpSide: Arc<dyn Hittable> = Arc::new(RotateY::new(side, -18.0));
-    //     tmpSide = Arc::new(Translate::new(tmpSide.clone(), Vec3::new(130.0,0.0,65.0)));
-    //     world.push(tmpSide);
-    // }
+    let mut box2: Arc<dyn Hittable>  = Cube::new(Vec3::enew(),Vec3::new(165.0,165.0,165.0), white);
+   
+    box2 = Arc::new(RotateY::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
+    world.push(box2);
 
-    let mut cam: Camera = Camera::new(1.0,600,200,50,40.0,Vec3::new(278.0,278.0,-800.0),
+    let mut cam: Camera = Camera::new(1.0,600,1000,50,40.0,Vec3::new(278.0,278.0,-800.0),
     Vec3::new(278.0,278.0,0.0), Vec3::new(0.0,1.0,0.0), 0.0, 10.0, Vec3::enew());
 
     cam.render(&world);
@@ -364,11 +364,5 @@ fn ppm_to_png(ppm_path: &Path, png_path: &Path) -> Result<(), ImageError> {
 }
 
 fn main() {
-    let input_file = Path::new("byte_final_scene.ppm");
-    let output_file = Path::new("final_scene.png");
-
-    match ppm_to_png(input_file, output_file){
-        Ok(_)=>eprintln!("Success"),
-        Err(e)=>eprintln!("failed: {}",e),
-    }
+    cornell_box();
 }

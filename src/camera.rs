@@ -16,6 +16,7 @@ use rayon::prelude::*;
 pub struct Camera{
     aspect_ratio: f64,
     pixel_samples_scale: f64,
+    recip_sqrt_spp: f64,
     vfov: f64,
     defocus_angle: f64,
     focus_dist: f64,
@@ -23,6 +24,7 @@ pub struct Camera{
     image_height: u32,
     samples_per_pixel: u32,
     max_depth: u32,
+    sqrt_spp: i32,
     center: Vec3,
     pixel00_loc: Vec3,
     pixel_delta_u: Vec3,
@@ -44,6 +46,7 @@ impl Camera{
         Camera{
             aspect_ratio: aspect_ratio,
             pixel_samples_scale: 0.0,
+            recip_sqrt_spp: 0.0,
             vfov: vfov,
             defocus_angle: defocus_angle,
             focus_dist: focus_dist,
@@ -51,6 +54,7 @@ impl Camera{
             image_height: 1,
             samples_per_pixel: samples_per_pixel,
             max_depth: max_depth,
+            sqrt_spp: 1,
             center: Vec3::enew(),
             pixel00_loc: Vec3::enew(),
             pixel_delta_u: Vec3::enew(),
@@ -73,8 +77,10 @@ impl Camera{
     fn initialize(&mut self){
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
         self.center = self.lookfrom;
-
-        self.pixel_samples_scale = 1.0/self.samples_per_pixel as f64;
+        
+        self.sqrt_spp = u32::isqrt(self.samples_per_pixel) as i32;
+        self.pixel_samples_scale = 1.0/(self.sqrt_spp*self.sqrt_spp) as f64;
+        self.recip_sqrt_spp = 1.0/self.sqrt_spp as f64;
         
         let theta: f64 = Self::degrees_to_radians(self.vfov);
         let h: f64 = (theta/2.0).tan();
@@ -116,7 +122,11 @@ impl Camera{
         if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered){
             return color_from_emission
         }
-        let color_from_scatter: Vec3 = attenuation * self.ray_color(&scattered, depth-1,world);
+
+        let scattering_pdf = rec.mat.scattering_pdf(r, rec.clone(), scattered);
+        let pdf_value = scattering_pdf;
+
+        let color_from_scatter: Vec3 = attenuation * scattering_pdf * self.ray_color(&scattered, depth-1,world) / pdf_value;
         color_from_emission + color_from_scatter
     }
     pub fn render(&mut self, world: &dyn Hittable){
@@ -132,10 +142,13 @@ impl Camera{
                 let mut local_camera: Camera = self.clone();
                 for (i,pixel) in row.iter_mut().enumerate(){
                     let mut pixel_color: Vec3 = Vec3::enew();
-                    for s in 0..local_camera.samples_per_pixel{
-                        let r: Ray = local_camera.get_ray(i as u32, j as u32);
-                        pixel_color += local_camera.ray_color(&r, local_camera.max_depth, &*world);
+                    for s_i in 0..self.sqrt_spp{
+                        for s_j in 0..self.sqrt_spp{
+                            let r: Ray = local_camera.get_ray(i as u32, j as u32, s_j as u32, s_i as u32);
+                            pixel_color += local_camera.ray_color(&r, local_camera.max_depth, &*world);
+                        }
                     }
+                    
                     let scaled: Vec3 = local_camera.pixel_samples_scale*pixel_color;
                     *pixel = write_color(scaled);
                 }
@@ -167,8 +180,8 @@ impl Camera{
     fn sample_square()->Vec3{
         Vec3::new(Self::random_double()-0.5,Self::random_double()-0.5,0.0)
     }
-    fn get_ray(&self, i: u32, j: u32)->Ray{
-        let offset: Vec3 = Self::sample_square();
+    fn get_ray(&self, i: u32, j: u32, s_i: u32, s_j: u32)->Ray{
+        let offset: Vec3 = self.sample_square_stratified(s_i, s_j);
         let pixel_sample: Vec3 = self.pixel00_loc +((i as f64 +offset.x())*self.pixel_delta_u)+((j as f64 +offset.y())*self.pixel_delta_v);
         let ray_origin: Vec3 = if self.defocus_angle <= 0.0{
             self.center 
@@ -186,5 +199,11 @@ impl Camera{
     fn defocus_disk_sample(&self)->Vec3{
         let p: Vec3 = Vec3::random_in_unit_disk();
         self.center+(p.x()*self.defocus_disk_u)+(p.y()*self.defocus_disk_v)
+    }
+    fn sample_square_stratified(&self, s_i: u32, s_j: u32)->Vec3{
+        let px = ((s_i as f64 + Self::random_double())*self.recip_sqrt_spp)-0.5;
+        let py = ((s_j as f64 + Self::random_double())*self.recip_sqrt_spp)-0.5;
+
+        Vec3::new(px,py,0.0)
     }
 }
