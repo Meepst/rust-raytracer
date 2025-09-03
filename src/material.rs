@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 
 pub trait Material: Send + Sync{
-    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         false
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3;
@@ -101,16 +101,14 @@ impl Isotropic{
 }
 
 impl Material for Lambertian{
-    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
-        let mut scatter_direction: Vec3 = rec.normal()+Vec3::random_unit_vector();
-        
-        if scatter_direction.near_zero(){
-            scatter_direction = rec.normal();
-        }
-       
-        *scattered = Ray::newt(rec.p(), scatter_direction, r_in.time());
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
+        let uvw: ONB = ONB::new(rec.normal);
+        let scatter_direction: Vec3 = uvw.transform(Vec3::random_cosine_direction());
+
+        *scattered = Ray::newt(rec.p(), scatter_direction.unit_vector(), r_in.time());
         *attenuation = self.tex.value(rec.u(),rec.v(), rec.p());
         //eprintln!("Atten: {} {} {}", attenuation.x(), attenuation.y(), attenuation.z());
+        *pdf = Vec3::dot(&uvw.w(), scattered.direction()) / std::f64::consts::PI;
         true
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
@@ -127,7 +125,7 @@ impl Material for Lambertian{
 }
 
 impl Material for Metal{
-    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         let reflected: Vec3 = Vec3::reflect(&r_in.direction(), &rec.normal());
         *scattered = Ray::newt(rec.p(), reflected, r_in.time());
         *attenuation = self.albedo;
@@ -142,7 +140,7 @@ impl Material for Metal{
 }
 
 impl Material for Dielectric{
-    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         *attenuation = Vec3::new(1.0,1.0,1.0);
         let ri: f64 = if rec.front_face() {
             1.0/self.refraction_index
@@ -174,7 +172,7 @@ impl Material for Dielectric{
 }
 
 impl Material for Diffuse_Light{
-    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         false
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
@@ -186,15 +184,16 @@ impl Material for Diffuse_Light{
 }
 
 impl Material for Isotropic{
-    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray)->bool{
+    fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         *scattered = Ray::newt(rec.p(), Vec3::random_unit_vector(), r_in.time());
         *attenuation = self.tex.value(rec.u(), rec.v(), rec.p());
+        pdf = 1.0/(4.0*std::f64::PI);
         true
     }
     fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
-        0.0
+        1.0/(4.0*std::f64::consts::PI)
     }
 }

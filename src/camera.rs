@@ -117,16 +117,33 @@ impl Camera{
 
         let mut scattered: Ray = Ray::new(Vec3::enew(),Vec3::enew());
         let mut attenuation: Vec3 = Vec3::enew();
+        let mut pdf_value: f64 = 0.0;
         let color_from_emission: Vec3 = rec.mat.emitted(rec.u(),rec.v(),rec.p());
         
-        if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered){
+        if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered, &mut pdf_value){
             return color_from_emission
         }
 
-        let scattering_pdf = rec.mat.scattering_pdf(r, rec.clone(), scattered);
-        let pdf_value = scattering_pdf;
+        let on_light = Vec3::new(Vec3::random_between(213.0,343.0),554.0,Vec3::random_between(227.0,332.0));
+        let mut to_light = on_light-rec.p();
+        let distance_squared = to_light.length_squared();
+        to_light = to_light.unit_vector();
 
-        let color_from_scatter: Vec3 = attenuation * scattering_pdf * self.ray_color(&scattered, depth-1,world) / pdf_value;
+        if to_light.dot(rec.normal) < 0.0{
+            return color_from_emission
+        }
+
+        let light_area = 13650.0; // (343-213)*(332-227)
+        let light_cosine = to_light.y().abs();
+        if light_cosine < 0.000001{
+            return color_from_emission
+        }
+
+        pdf_value = distance_squared / (light_cosine*light_area);
+        scattered = Ray::newt(rec.p(),to_light,r.time());
+        let scattering_pdf = rec.mat.scattering_pdf(r,rec,scattered);
+        let color_from_scatter = (attenuation*scattering_pdf*self.ray_color(scattered,depth-1,world))/pdf_value;
+        
         color_from_emission + color_from_scatter
     }
     pub fn render(&mut self, world: &dyn Hittable){
