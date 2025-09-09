@@ -14,7 +14,7 @@ pub trait Material: Send + Sync{
     fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         false
     }
-    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3;
+    fn emitted(&self, r_in: Ray, rec: Hit_record, u: f64, v: f64, p: Vec3)->Vec3;
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64;
 }
 
@@ -111,7 +111,7 @@ impl Material for Lambertian{
         *pdf = Vec3::dot(&uvw.w(), scattered.direction()) / std::f64::consts::PI;
         true
     }
-    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+    fn emitted(&self, r_in: Ray, rec: Hit_record, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
@@ -131,7 +131,7 @@ impl Material for Metal{
         *attenuation = self.albedo;
         true
     }
-    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+    fn emitted(&self, r_in: Ray, rec: Hit_record, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
@@ -163,7 +163,7 @@ impl Material for Dielectric{
         *scattered = Ray::newt(rec.p(), direction, r_in.time());
         true
     }
-    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+    fn emitted(&self, r_in: Ray, rec: Hit_record, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
@@ -175,7 +175,10 @@ impl Material for Diffuse_Light{
     fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         false
     }
-    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+    fn emitted(&self, r_in: Ray, rec: Hit_record, u: f64, v: f64, p: Vec3)->Vec3{
+        if !rec.front_face{
+            return Vec3::enew()
+        }
         self.tex.value(u,v,p)
     }
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{
@@ -187,10 +190,10 @@ impl Material for Isotropic{
     fn scatter(&self, r_in: &Ray, rec: &Hit_record, attenuation: &mut Vec3, scattered: &mut Ray, pdf: &mut f64)->bool{
         *scattered = Ray::newt(rec.p(), Vec3::random_unit_vector(), r_in.time());
         *attenuation = self.tex.value(rec.u(), rec.v(), rec.p());
-        pdf = 1.0/(4.0*std::f64::PI);
+        *pdf = 1.0/(4.0*std::f64::consts::PI);
         true
     }
-    fn emitted(&self, u: f64, v: f64, p: Vec3)->Vec3{
+    fn emitted(&self, r_in: Ray, rec: Hit_record, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::enew()
     }
     fn scattering_pdf(&self, r_in: &Ray, rec: Hit_record, scattered: Ray)->f64{

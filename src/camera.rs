@@ -7,6 +7,8 @@ use crate::color::write_color as write_color;
 use crate::material::Lambertian as Lambertian;
 use crate::material::Metal as Metal;
 use crate::material::Material as Material;
+use crate::pdf::CosinePDF as CosinePDF;
+use crate::pdf::PDF as PDF;
 
 use rand::Rng;
 use std::sync::Arc;
@@ -118,31 +120,19 @@ impl Camera{
         let mut scattered: Ray = Ray::new(Vec3::enew(),Vec3::enew());
         let mut attenuation: Vec3 = Vec3::enew();
         let mut pdf_value: f64 = 0.0;
-        let color_from_emission: Vec3 = rec.mat.emitted(rec.u(),rec.v(),rec.p());
+        let color_from_emission: Vec3 = rec.clone().mat.emitted(*r, rec.clone(), rec.u(),rec.v(),rec.p());
         
         if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered, &mut pdf_value){
             return color_from_emission
         }
 
-        let on_light = Vec3::new(Vec3::random_between(213.0,343.0),554.0,Vec3::random_between(227.0,332.0));
-        let mut to_light = on_light-rec.p();
-        let distance_squared = to_light.length_squared();
-        to_light = to_light.unit_vector();
+        let surfacePdf: Arc<dyn PDF> = Arc::new(CosinePDF::new(rec.normal()));
+        scattered = Ray::newt(rec.p(),surfacePdf.generate(),r.time());
+        pdf_value = surfacePdf.value(scattered.direction());
 
-        if to_light.dot(rec.normal) < 0.0{
-            return color_from_emission
-        }
+        let scattering_pdf = rec.clone().mat.scattering_pdf(r,rec,scattered);
 
-        let light_area = 13650.0; // (343-213)*(332-227)
-        let light_cosine = to_light.y().abs();
-        if light_cosine < 0.000001{
-            return color_from_emission
-        }
-
-        pdf_value = distance_squared / (light_cosine*light_area);
-        scattered = Ray::newt(rec.p(),to_light,r.time());
-        let scattering_pdf = rec.mat.scattering_pdf(r,rec,scattered);
-        let color_from_scatter = (attenuation*scattering_pdf*self.ray_color(scattered,depth-1,world))/pdf_value;
+        let color_from_scatter = (attenuation*scattering_pdf*self.ray_color(&scattered,depth-1,world))/pdf_value;
         
         color_from_emission + color_from_scatter
     }

@@ -1,20 +1,21 @@
-mod vec3;
-mod color;
-mod ray;
-mod hittable;
-mod hittable_list;
-mod sphere;
-mod interval;
-mod camera;
-mod material;
-mod bvh;
-mod aabb;
-mod texture;
-mod image_tex;
-mod perlin;
-mod quad;
-mod constant_medium;
-mod onb;
+pub mod vec3;
+pub mod color;
+pub mod ray;
+pub mod hittable;
+pub mod hittable_list;
+pub mod sphere;
+pub mod interval;
+pub mod camera;
+pub mod material;
+pub mod bvh;
+pub mod aabb;
+pub mod texture;
+pub mod image_tex;
+pub mod perlin;
+pub mod quad;
+pub mod constant_medium;
+pub mod onb;
+pub mod pdf;
 
 use std::sync::Arc;
 use vec3::Vec3 as Vec3;
@@ -232,7 +233,7 @@ fn cornell_box(){
     box2 = Arc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
     world.push(box2);
 
-    let mut cam: Camera = Camera::new(1.0,600,1000,50,40.0,Vec3::new(278.0,278.0,-800.0),
+    let mut cam: Camera = Camera::new(1.0,600,10,50,40.0,Vec3::new(278.0,278.0,-800.0),
     Vec3::new(278.0,278.0,0.0), Vec3::new(0.0,1.0,0.0), 0.0, 10.0, Vec3::enew());
 
     cam.render(&world);
