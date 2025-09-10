@@ -132,7 +132,7 @@ impl Camera{
         }
 
         let light_ptr = Arc::new(HittablePDF::new(lights.clone(), rec.p()));
-        let mixture_pdf = MixturePDF::new(light_ptr,srec.pdf_ptr);
+        let mixture_pdf = MixturePDF::new(light_ptr,srec.pdf_ptr.expect("REASON"));
 
 
         let scattered = Ray::newt(rec.p(),mixture_pdf.generate(),r.time());

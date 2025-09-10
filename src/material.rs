@@ -129,7 +129,7 @@ impl ScatterRecord{
     pub fn new()->Self{
         Self{
             attenuation: Vec3::enew(),
-            pdf_ptr: Arc::new(SpherePDF::new()),
+            pdf_ptr: None,
             skip_pdf: false,
             skip_pdf_ray: Ray::new(Vec3::enew(),Vec3::enew()),
         }
@@ -139,7 +139,7 @@ impl ScatterRecord{
 impl Material for Lambertian{
     fn scatter(&self, r_in: Ray, rec: Hit_record, srec: &mut ScatterRecord)->bool{
         srec.attenuation = self.tex.value(rec.u(),rec.v(),rec.p());
-        srec.pdf_ptr = Arc::new(CosinePDF::new(rec.normal));
+        srec.pdf_ptr = Some(Arc::new(CosinePDF::new(rec.normal)));
         srec.skip_pdf = false;
 
         true
@@ -228,7 +228,7 @@ impl Material for Diffuse_Light{
 impl Material for Isotropic{
     fn scatter(&self, r_in: Ray, rec: Hit_record, srec: &mut ScatterRecord)->bool{
         srec.attenuation = self.tex.value(rec.u(),rec.v(),rec.p());
-        srec.pdf_ptr = Arc::new(SpherePDF::new());
+        srec.pdf_ptr = Some(Arc::new(SpherePDF::new()));
         srec.skip_pdf = false;
         true
     }
