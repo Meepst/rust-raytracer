@@ -16,6 +16,7 @@ pub struct Quad{
     w: Vec3,
     normal: Vec3,
     D: f64,
+    area: f64,
     mat: Arc<dyn Material>,
     bbox: AABB,
 }
@@ -34,6 +35,7 @@ impl Quad{
             w: Vec3::enew(),
             normal: Vec3::enew(),
             D: 0.0,
+            area: 0.0,
             mat: mat,
             bbox: AABB::newi(Vec3::enew(),Vec3::enew()),
         };
@@ -42,6 +44,8 @@ impl Quad{
         ret.normal = Vec3::unit_vector(&n);
         ret.D = ret.normal.dot(ret.Q);
         ret.w = n.clone() / n.dot(n.clone());
+
+        ret.area = n.length();
 
         ret.set_bounding_box();
         ret
@@ -117,6 +121,20 @@ impl Hittable for Quad{
     }
     fn bounding_box(&self)->AABB{
         self.bbox
+    }
+    fn pdf_value(&self, origin: Vec3, direction: Vec3)->f64{
+        let mut rec = Hit_record::new(self.mat.clone());
+        if !self.hit(&Ray::new(origin,direction),Interval::new(0.001,f64::INFINITY), &mut rec){
+            return 0.0
+        }
+
+        let distance_squared = rec.clone().t()*rec.clone().t()*direction.length_squared();
+        let cosine = f64::abs(direction.dot(rec.normal())) / direction.length();
+        distance_squared/(cosine*self.area)
+    }
+    fn random(&self, origin: Vec3)->Vec3{
+        let p = self.Q + (Vec3::random_double()*self.u)+(Vec3::random_double()*self.v);
+        p-origin
     }
 }
 

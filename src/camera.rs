@@ -9,6 +9,9 @@ use crate::material::Metal as Metal;
 use crate::material::Material as Material;
 use crate::pdf::CosinePDF as CosinePDF;
 use crate::pdf::PDF as PDF;
+use crate::pdf::HittablePDF as HittablePDF;
+use crate::pdf::MixturePDF as MixturePDF;
+use crate::material::ScatterRecord as ScatterRecord;
 
 use rand::Rng;
 use std::sync::Arc;
@@ -106,7 +109,7 @@ impl Camera{
         self.defocus_disk_u = self.u*defocus_radius;
         self.defocus_disk_v = self.v*defocus_radius;
     } 
-    fn ray_color(&self,r: &Ray, depth: u32,world: &dyn Hittable)->Vec3{
+    fn ray_color(&self,r: &Ray, depth: u32,world: &dyn Hittable, lights: Arc<dyn Hittable>)->Vec3{
         if depth <= 0{
             return Vec3::enew()
         }
@@ -117,26 +120,32 @@ impl Camera{
             return self.background;
         }
 
-        let mut scattered: Ray = Ray::new(Vec3::enew(),Vec3::enew());
-        let mut attenuation: Vec3 = Vec3::enew();
-        let mut pdf_value: f64 = 0.0;
-        let color_from_emission: Vec3 = rec.clone().mat.emitted(*r, rec.clone(), rec.u(),rec.v(),rec.p());
-        
-        if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered, &mut pdf_value){
+        let mut srec = ScatterRecord::new();
+        let color_from_emission = rec.mat.clone().emitted(*r, rec.clone(),rec.u(),rec.v(),rec.p());
+
+        if !rec.clone().mat.scatter(*r, rec.clone(), &mut srec){
             return color_from_emission
         }
 
-        let surfacePdf: Arc<dyn PDF> = Arc::new(CosinePDF::new(rec.normal()));
-        scattered = Ray::newt(rec.p(),surfacePdf.generate(),r.time());
-        pdf_value = surfacePdf.value(scattered.direction());
+        if srec.skip_pdf{
+            return srec.attenuation*self.ray_color(&srec.skip_pdf_ray,depth-1,world,lights)
+        }
+
+        let light_ptr = Arc::new(HittablePDF::new(lights.clone(), rec.p()));
+        let mixture_pdf = MixturePDF::new(light_ptr,srec.pdf_ptr);
+
+
+        let scattered = Ray::newt(rec.p(),mixture_pdf.generate(),r.time());
+        let pdf_value = mixture_pdf.value(scattered.direction());
 
         let scattering_pdf = rec.clone().mat.scattering_pdf(r,rec,scattered);
 
-        let color_from_scatter = (attenuation*scattering_pdf*self.ray_color(&scattered,depth-1,world))/pdf_value;
+        let sample_color = self.ray_color(&scattered, depth-1, world, lights);
+        let color_from_scatter = (srec.attenuation*scattering_pdf*sample_color)/pdf_value;
         
         color_from_emission + color_from_scatter
     }
-    pub fn render(&mut self, world: &dyn Hittable){
+    pub fn render(&mut self, world: &dyn Hittable, lights: Arc<dyn Hittable>){
         self.initialize();
         println!("P3\n{0} {1}\n255", self.image_width, self.image_height);
 
@@ -152,7 +161,7 @@ impl Camera{
                     for s_i in 0..self.sqrt_spp{
                         for s_j in 0..self.sqrt_spp{
                             let r: Ray = local_camera.get_ray(i as u32, j as u32, s_j as u32, s_i as u32);
-                            pixel_color += local_camera.ray_color(&r, local_camera.max_depth, &*world);
+                            pixel_color += local_camera.ray_color(&r, local_camera.max_depth, &*world, lights.clone());
                         }
                     }
                     

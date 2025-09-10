@@ -237,3 +237,11 @@ impl IndexMut<usize> for Vec3{
         }
     }
 }
+
+impl Add<f64> for Vec3{
+    type Output = Vec3;
+
+    fn add(self, v: f64)->Vec3{
+        Self::new(self.x()+v,self.y()+v,self.z()+v)
+    }
+}
