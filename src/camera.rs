@@ -5,9 +5,7 @@ use crate::hittable::Hit_record as Hit_record;
 use crate::interval::Interval as Interval;
 use crate::color::write_color as write_color;
 use crate::material::Lambertian as Lambertian;
-use crate::material::Metal as Metal;
 use crate::material::Material as Material;
-use crate::pdf::CosinePDF as CosinePDF;
 use crate::pdf::PDF as PDF;
 use crate::pdf::HittablePDF as HittablePDF;
 use crate::pdf::MixturePDF as MixturePDF;
@@ -128,7 +126,7 @@ impl Camera{
         }
 
         if srec.skip_pdf{
-            return srec.attenuation*self.ray_color(&srec.skip_pdf_ray,depth-1,world,lights)
+            return srec.attenuation*self.ray_color(&srec.skip_pdf_ray,depth-1,world,lights.clone())
         }
 
         let light_ptr = Arc::new(HittablePDF::new(lights.clone(), rec.p()));
@@ -136,7 +134,7 @@ impl Camera{
 
 
         let scattered = Ray::newt(rec.p(),mixture_pdf.generate(),r.time());
-        let pdf_value = mixture_pdf.value(scattered.direction());
+        let pdf_value = mixture_pdf.value(scattered.direction()).max(1e-6);
 
         let scattering_pdf = rec.clone().mat.scattering_pdf(r,rec,scattered);
 
@@ -155,7 +153,7 @@ impl Camera{
             .par_chunks_mut(self.image_width as usize)
             .enumerate()
             .for_each(|(j,row)|{
-                let mut local_camera: Camera = self.clone();
+                let local_camera: Camera = self.clone();
                 for (i,pixel) in row.iter_mut().enumerate(){
                     let mut pixel_color: Vec3 = Vec3::enew();
                     for s_i in 0..self.sqrt_spp{

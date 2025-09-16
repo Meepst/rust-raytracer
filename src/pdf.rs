@@ -1,7 +1,5 @@
 use crate::vec3::Vec3 as Vec3;
-use crate::sphere::Sphere as Sphere;
 use crate::onb::ONB as ONB;
-use crate::hittable_list::Hittable_List as Hittable_List;
 use crate::hittable::Hittable as Hittable;
 
 use std::sync::Arc;

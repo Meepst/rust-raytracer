@@ -99,7 +99,7 @@ impl Texture for Checker_Texture{
 }
 
 impl Texture for Image_Texture{
-    fn value(&self, mut u: f64, mut v: f64, p: Vec3)->Vec3{
+    fn value(&self, u: f64, v: f64, p: Vec3)->Vec3{
         if self.image.height() <= 0 {
             return Vec3::new(0.0,1.0,1.0)
         }
@@ -117,7 +117,7 @@ impl Texture for Image_Texture{
 }
 
 impl Texture for Noise_Texture{
-    fn value(&self, mut u: f64, mut v: f64, p: Vec3)->Vec3{
+    fn value(&self, u: f64, v: f64, p: Vec3)->Vec3{
         Vec3::new(0.5,0.5,0.5) * (1.0 + (self.scale * p.z() + 10.0 *self.noise.turb(p, 7)).sin())
     }
 }

@@ -1,6 +1,6 @@
 use std::env;
 use std::path::PathBuf;
-use stb_image::image::{Image, load, LoadResult};
+use stb_image::image::{load, LoadResult};
 
 pub struct RtwImage{
     bytes_per_pixel: usize,

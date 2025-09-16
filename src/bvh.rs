@@ -1,12 +1,10 @@
 use crate::aabb::AABB as AABB;
 use crate::hittable::Hittable as Hittable;
-use crate::hittable_list::Hittable_List as Hittable_List;
 use crate::Interval;
 use crate::Ray;
 use crate::Hit_record;
 
 use std::sync::Arc;
-use rand::Rng;
 use std::cmp::Ordering;
 
 pub struct BVH{

@@ -1,12 +1,12 @@
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 use crate::hittable::Hittable as Hittable;
 use crate::hittable::Hit_record as Hit_record;
 use crate::ray::Ray as Ray;
 use crate::interval::Interval as Interval;
-use crate::material::Material as Material;
 use crate::material::Lambertian as Lambertian;
 use crate::vec3::Vec3 as Vec3;
 use crate::aabb::AABB as AABB;
+use rand::Rng; 
 
 pub struct Hittable_List{
     pub objects: Vec<Arc<dyn Hittable>>,
@@ -64,5 +64,19 @@ impl Hittable for Hittable_List{
     }
     fn bounding_box(&self)->AABB{
         self.bbox
+    }
+    fn pdf_value(&self, origin: Vec3, direction: Vec3)->f64{
+        let weight = 1.0/self.objects.len() as f64;
+        let mut sum = 0.0;
+        for obj in &self.objects{
+            sum += weight * obj.pdf_value(origin, direction);
+        }
+        //eprintln!("Weight: {} Sum: {}",weight, sum);
+        sum
+    }
+    fn random(&self, origin: Vec3)->Vec3{
+        //eprintln!("hello!");
+        let listSize = self.objects.len();
+        self.objects[rand::thread_rng().gen_range(0..listSize-1)].random(origin)
     }
 }

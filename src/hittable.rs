@@ -2,7 +2,6 @@ use crate::ray::Ray as Ray;
 use crate::vec3::Vec3 as Vec3;
 use crate::interval::Interval as Interval;
 use crate::material::Material as Material;
-use crate::material::Metal as Metal;
 use crate::aabb::AABB as AABB;
 
 use std::sync::Arc;

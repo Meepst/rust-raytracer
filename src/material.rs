@@ -2,15 +2,12 @@ use crate::ray::Ray as Ray;
 use crate::hittable::Hit_record as Hit_record;
 use crate::vec3::Vec3 as Vec3;
 use crate::texture::Solid_Color as Solid_Color;
-use crate::texture::Checker_Texture as Checker_Texture;
 use crate::texture::Texture as Texture;
-use crate::onb::ONB as ONB;
 use crate::pdf::PDF as PDF;
 use crate::pdf::SpherePDF as SpherePDF;
 use crate::pdf::CosinePDF as CosinePDF;
 
 use std::sync::Arc;
-use std::ptr;
 
 
 
@@ -93,7 +90,7 @@ impl Dielectric{
     fn reflectance(cosine: f64, refraction_index: f64)->f64{
         let mut r0: f64 = (1.0-refraction_index)/(1.0+refraction_index);
         r0=r0*r0;
-        r0+(1.0-r0)*f64::powi((1.0-cosine),5)
+        r0+(1.0-r0)*f64::powi(1.0-cosine,5)
     }
 }
 

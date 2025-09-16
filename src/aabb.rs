@@ -1,7 +1,6 @@
 use crate::interval::Interval as Interval;
 use crate::vec3::Vec3 as Vec3;
 use crate::ray::Ray as Ray;
-use crate::hittable::Hittable as Hittable;
 
 use std::ops::Add;
 

@@ -13,6 +13,17 @@ pub fn write_color(pixel_color: Vec3)->String{
     let mut g: f64 = pixel_color.y();
     let mut b: f64 = pixel_color.z();
 
+    if r.is_nan(){
+        r = 0.0;
+    }
+    if g.is_nan(){
+        g = 0.0;
+    }
+    if b.is_nan(){
+        b = 0.0;
+    }
+
+
     r = linear_to_gamma(r);
     g = linear_to_gamma(g);
     b = linear_to_gamma(b);
